@@ -23,4 +23,7 @@ dependencies = [
 fgtools = "fontgarden.cli:main"
 
 [tool.setuptools]
-packages = ["fontgarden"]
+packages = ["fontgarden", "fontgarden.proof_web"]
+
+[tool.setuptools.package-data]
+"fontgarden.proof_web" = ["samples.toml", "render_detail.rs", "app/*"]

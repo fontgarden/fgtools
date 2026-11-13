@@ -1,0 +1,180 @@
+# The default text samples of `fgtools proof-web`.
+#
+# A project adds samples, or replaces a sample with the same key, in
+# sources/proof-samples.toml. The format is in the README of fontgarden-tools.
+#
+# Arabic joining samples: for a dual-joining letter, repeat the letter in
+# normal text, for example "ببب ب", to show the initial, medial, final and
+# isolated forms. A right-joining letter has only its real forms. Do not make
+# four forms with presentation characters.
+
+# Short samples for Compare, Toggle and Waterfall.
+
+[sample.latin-words]
+label = "Latin words"
+scripts = ["Latin"]
+text = "Hamburgefontsiv"
+
+[sample.latin-spacing]
+label = "Latin spacing"
+scripts = ["Latin"]
+text = "HOHOH nonon"
+
+[sample.hebrew-words]
+label = "Hebrew words"
+scripts = ["Hebrew"]
+text = "היה חיה תחיה"
+
+[sample.hebrew-marks]
+label = "Hebrew marks"
+scripts = ["Hebrew"]
+text = "הָ חַ תֵ הּ חִ תַ"
+
+[sample.latin-hebrew]
+label = "Latin and Hebrew"
+scripts = ["Latin", "Hebrew"]
+text = "no HO החת"
+
+[sample.arabic-words]
+label = "Arabic words"
+scripts = ["Arabic"]
+text = "باب كتاب سبب"
+
+[sample.arabic-joining]
+label = "Arabic joining"
+scripts = ["Arabic"]
+text = "ببب ب سسس س"
+
+[sample.arabic-marks]
+label = "Arabic marks"
+scripts = ["Arabic"]
+text = "بَ بِ بُ بّ بْ"
+
+[sample.latin-arabic]
+label = "Latin and Arabic"
+scripts = ["Latin", "Arabic"]
+text = "no HO باب"
+
+# Text samples for the Text mode.
+
+[text.latin]
+label = "Latin text"
+scripts = ["Latin"]
+
+[[text.latin.paragraphs]]
+text = "The morning light came through the window and fell across the table, the open notebook and the book beside it. In the small yard, neighbours talked over the fence, and at the station people waited for the train to work. One of the passengers held an envelope of old photographs. She looked at them slowly, searched for the house she remembered and the tree beside its door, and then put the photographs back in her bag."
+
+[[text.latin.paragraphs]]
+text = "In the afternoon a group of friends met in the workroom. Large sheets of paper hung on the wall, and open notebooks lay in the middle of the table. They read the text aloud, compared the lines and talked about the pace of reading. Sometimes they stopped at a single word; sometimes they read a whole paragraph without a pause. The question was how to make a clear and quiet page, on which each letter joins its neighbours and no detail draws more attention than it needs."
+
+[text.hebrew]
+label = "Hebrew text"
+scripts = ["Hebrew"]
+
+[[text.hebrew.paragraphs]]
+text = "בתחילת היום נפתח חלון הבית אל הרחוב. האור נח על השולחן, על המחברת ועל הספר הפתוח. בחצר הקטנה נשמעו שיחות של שכנים, ובתחנת הרכבת חיכו אנשים בדרכם לעבודה. אחת הנוסעות החזיקה מעטפה ובה תמונות ישנות. היא התבוננה בהן לאט, חיפשה את הבית שזכרה ואת העץ שעמד ליד הדלת, ואז החזירה את התמונות לתיק. בדרך חזרה רצתה לעבור באותו רחוב ולראות מה השתנה בו במשך השנים."
+
+[[text.hebrew.paragraphs]]
+text = "אחר הצהריים התכנסו חברות וחברים בחדר העבודה. על הקיר נתלו דפים גדולים, ובמרכז השולחן הונחו מחברות פתוחות. הם קראו את הטקסט בקול, השוו בין השורות ושוחחו על הקצב של הקריאה. לפעמים נעצרו ליד מילה אחת, ולפעמים עברו על פסקה שלמה בלי להפסיק. השאלה היתה כיצד ליצור דף ברור ונעים, שבו כל אות משתלבת בשכנותיה ושום פרט אינו מושך את תשומת הלב בלי סיבה. בתום השיחה נבחרו כמה עמודים להמשך העבודה."
+
+[[text.hebrew.paragraphs]]
+text = "לקראת הערב חזרה השכונה לשקט הרגיל שלה. החנויות נסגרו בזו אחר זו, ומאחורי החלונות נדלקו מנורות קטנות. בחדר הקריאה נשארה קבוצה אחרונה של תלמידות ותלמידים. הם פתחו ספר חדש, קראו יחד את תחילת הפרק ושאלו על הקשר בין הכתב, השפה והזיכרון. מחוץ לחדר חלפה רכבת, ומבעד לדלת נשמעה שיחה שקטה. על השולחן נשאר דף ובו כמה הערות, תאריך אחד וכותרת שעדיין חיכתה לניסוח מדויק יותר."
+
+[text.latin-hebrew]
+label = "Latin and Hebrew"
+scripts = ["Latin", "Hebrew"]
+
+[[text.latin-hebrew.paragraphs]]
+lang = "he"
+runs = [
+  { text = "בחדר העבודה מונחים שלושה ספרים פתוחים. הכותרת הראשונה כתובה בכתב " },
+  { text = "Inter", lang = "en", dir = "ltr" },
+  { text = ", ולצדה שתי דוגמאות בכתב " },
+  { text = "Rubik", lang = "en", dir = "ltr" },
+  { text = " ובכתב " },
+  { text = "Noto Sans Hebrew", lang = "en", dir = "ltr" },
+  { text = ". הקוראים עוברים מן העברית אל האנגלית ובחזרה. הם בודקים כיצד המילים יושבות על השורה, כיצד האותיות משתלבות זו בזו וכיצד משתנה המראה של פסקה שלמה. גם מספרים כמו " },
+  { text = "2026", lang = "en", dir = "ltr" },
+  { text = " ושעה כמו " },
+  { text = "08:30", lang = "en", dir = "ltr" },
+  { text = " צריכים להישאר ברורים בתוך המשפט, בלי לשבש את סדר הקריאה או את הקצב של השפה." },
+]
+
+[[text.latin-hebrew.paragraphs]]
+lang = "en"
+runs = [
+  { text = "A page is read through rhythm as well as individual words. The eye moves from one familiar shape to the next, following the spaces between letters, words and lines. In a bilingual book, the phrase " },
+  { text = "הבית הפתוח", lang = "he", dir = "rtl" },
+  { text = " can sit beside an English title without losing its own direction. Capitals, lowercase letters and numbers such as 128 or 700 should belong to the same typographic conversation. A clear paragraph gives each script room to speak, while keeping the weight and texture of the page consistent." },
+]
+
+[[text.latin-hebrew.paragraphs]]
+lang = "he"
+runs = [
+  { text = "בסוף המפגש חוזרים אל הדף הראשון וקוראים אותו מחדש. מתחת לכותרת " },
+  { text = "Reading Together", lang = "en", dir = "ltr" },
+  { text = " מופיעה פסקה בעברית, אחריה שורה באנגלית ולבסוף הערה קצרה עם התאריך " },
+  { text = "19.10.2026", lang = "en", dir = "ltr" },
+  { text = ". הפעם מתמקדים במרווחים ובמשקל של הטקסט: האם השורות נראות צפופות או פתוחות, האם אות אחת כהה מדי והאם המעבר בין השפות שומר על תחושה רציפה. התשובות נרשמות במחברת, לצד המילים שהצריכו מבט נוסף. כך אפשר לחזור אל אותה פסקה בהמשך, להשוות בין הגרסאות ולראות אם התיקון עזר לקריאה." },
+]
+
+[text.arabic]
+label = "Arabic text"
+scripts = ["Arabic"]
+
+[[text.arabic.paragraphs]]
+text = "في الصباح فتحت النافذة على الشارع، ودخل الضوء إلى الغرفة. على الطاولة كتاب مفتوح ودفتر صغير وقلم. في الساحة القريبة تحدث الجيران، وفي المحطة انتظر الناس القطار في طريقهم إلى العمل. كانت إحدى المسافرات تحمل مظروفا فيه صور قديمة، فنظرت إليها ببطء وبحثت عن البيت الذي تذكره وعن الشجرة التي كانت بجانب الباب."
+
+[[text.arabic.paragraphs]]
+text = "بعد الظهر اجتمع الأصدقاء في غرفة العمل. علقوا على الجدار أوراقا كبيرة، ووضعوا الدفاتر المفتوحة في وسط الطاولة. قرأوا النص بصوت عال، وقارنوا بين السطور، وتحدثوا عن إيقاع القراءة. كان السؤال كيف نصنع صفحة واضحة ومريحة، يتصل فيها كل حرف بجاره ولا يلفت أي تفصيل الانتباه أكثر من اللازم."
+
+# Overview samples: each paragraph is a separate labeled section. They are
+# also in the sample menu of the other modes.
+
+[text.arabic-alphabet]
+label = "Arabic alphabet"
+overview = true
+scripts = ["Arabic"]
+paragraphs = [
+  { label = "Basic alphabet", text = "ء ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي" },
+  { label = "Alef, hamza and alternate forms", text = "آ أ إ ٱ ؤ ئ ء ة ى ي" },
+  { label = "Arabic and Persian numerals", text = "٠١٢٣٤٥٦٧٨٩   ۰۱۲۳۴۵۶۷۸۹" },
+  { label = "Words and rhythm", text = "باب كتاب سبب   دار درب ورد   سلام شمس قلم   لغة عربية" },
+]
+
+[text.arabic-joining]
+label = "Arabic joining forms"
+overview = true
+scripts = ["Arabic"]
+paragraphs = [
+  { label = "Joining forms · ا ب ت ث", text = "با ا   ببب ب   تتت ت   ثثث ث" },
+  { label = "Joining forms · ج ح خ د", text = "ججج ج   ححح ح   خخخ خ   بد د" },
+  { label = "Joining forms · ذ ر ز س", text = "بذ ذ   بر ر   بز ز   سسس س" },
+  { label = "Joining forms · ش ص ض ط", text = "ششش ش   صصص ص   ضضض ض   ططط ط" },
+  { label = "Joining forms · ظ ع غ ف", text = "ظظظ ظ   ععع ع   غغغ غ   ففف ف" },
+  { label = "Joining forms · ق ك ل م", text = "ققق ق   ككك ك   للل ل   ممم م" },
+  { label = "Joining forms · ن ه و ي", text = "ننن ن   ههه ه   بو و   ييي ي" },
+  { label = "Lam–Alef and mixed joins", text = "لا لأ لإ لآ   بلا بلأ بلإ بلآ   سلام كتاب مدرسة" },
+]
+
+# A paragraph with `scripts` is left out when the font does not cover them.
+[text.all-scripts]
+label = "All scripts"
+overview = true
+paragraphs = [
+  { label = "Latin · Capitals", scripts = ["Latin"], text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" },
+  { label = "Latin · Lowercase", scripts = ["Latin"], text = "abcdefghijklmnopqrstuvwxyz" },
+  { label = "Latin · Text", scripts = ["Latin"], text = "The quick brown fox jumps over the lazy dog.\nHamburgefontsiv · minimum · HAMBURGEFONTSIV" },
+  { label = "Hebrew · Alphabet and finals", scripts = ["Hebrew"], text = "א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת   ך ם ן ף ץ" },
+  { label = "Hebrew · Text", scripts = ["Hebrew"], text = "בתחילת היום נפתח חלון הבית אל הרחוב. האור נח על השולחן ועל הספר הפתוח." },
+  { label = "Arabic · Alphabet", scripts = ["Arabic"], text = "ء ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي" },
+  { label = "Arabic · Joining and text", scripts = ["Arabic"], text = "ببب ب   سسس س   ممم م   ههه ه   ييي ي\nفي بداية اليوم نفتح الكتاب ونقرأ النص العربي." },
+  { label = "Numerals and punctuation", scripts = ["Latin"], text = "0123456789   ٠١٢٣٤٥٦٧٨٩   ۰۱۲۳۴۵۶۷۸۹\n.,:;!? () [] {} / — –   ، ؛ ؟" },
+  { label = "Script transitions", scripts = ["Latin", "Hebrew", "Arabic"], lang = "en", runs = [
+    { text = "Sample 2026 · " },
+    { text = "שלום עולם", lang = "he", dir = "rtl" },
+    { text = " · " },
+    { text = "اللغة العربية", lang = "ar", dir = "rtl" },
+    { text = " · Regular / Bold" },
+  ] },
+]
