@@ -132,7 +132,7 @@ def lint(only=None, root=None):
         for f in findings:
             print("  " + f)
         return 1
-    print("glif_lint: clean")
+    print("lint-glifs: clean")
     return 0
 
 

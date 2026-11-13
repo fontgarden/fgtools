@@ -27,7 +27,8 @@ the grades rise, more drafts are accepted, and the overlap with Eli's version
 increases. Edits of a glyph that stays purple are not visible, so Eli
 changes the mark in the commit that grades or corrects the draft.
 
-Reviews before START are not listed. They predate the grades.
+Reviews before `[corrections] start` in sources/design.toml are not listed,
+for example the reviews from before a project used the grades.
 
 The project root must be the top level of its Git repository.
 """
@@ -43,7 +44,6 @@ from fontgarden import project
 
 MARK = re.compile(r'<key>public.markColor</key>\s*<string>([^<]*)</string>')
 HASH = re.compile(r'\b[0-9a-f]{7,40}\b')
-START = '2026-11-13'
 
 
 def git(*args, root=None, check=True):
@@ -157,10 +157,11 @@ def main():
     parser.add_argument('--all', action='store_true', help='list every review')
     args = parser.parse_args()
     cited, months = citations(), {}
+    start = str(project.load().design().get('corrections', {}).get('start', ''))
     print(f"{'date':10}  {'commit':8}  {'master':7}  {'glyph':24}  {'grade':6}  {'against':7}  {'result':9}  "
           f"{'iou':>5}  {'dist':>5}  cited")
     for row in reviews():
-        if row['date'] < START:
+        if row['date'] < start:
             continue
         row['cited'] = row['commit'][:7] in cited
         months.setdefault(row['date'][:7], []).append(row)

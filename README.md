@@ -6,8 +6,9 @@ design targets, check source changes before review, lint the outlines,
 evaluate drafting methods and list the reviews of drafts from the Git
 history. The tools do not change the UFO sources.
 
-The package was extracted from the scripts of Virtua Grotesk. The command
-output is the same as the output of those scripts.
+The package was extracted from the scripts of
+[Virtua Grotesk](https://github.com/eliheuer/virtua-grotesk), which is the
+reference project.
 
 ## Install
 
@@ -31,13 +32,17 @@ parent that contains that file. The tools read these files:
 | --- | --- |
 | `sources/config.yaml` | `sources` names the designspace. `outputDir` is the fonts directory. Both are relative to `sources/`. |
 | The designspace | The masters are its `<source>` elements, in order. |
-| `sources/design.toml` | Grid, stroke targets (`targets`) and mark colors (`colors`). |
+| `sources/design.toml` | Grid, stroke targets (`targets`), mark colors (`colors`) and the first date that `corrections` lists (`[corrections] start`). |
 | `sources/held-out-glyphs.toml` | The cases of `evaluate-drafting`. |
 
 The name of a master is the `stylename` attribute of its `<source>`. Without
 that attribute, it is the part of the UFO file name after the last `-`,
 without `.ufo`. For example, `Family-Bold.ufo` gives `Bold`. The first source
 is the default master.
+
+Glyph names give the script of a glyph: a name that contains `-ar` is
+Arabic, `-hb` is Hebrew, and every other glyph is in the group "Latin and
+other". These are the suffixes of the Glyphs naming convention.
 
 `check-changes` and `corrections` read the Git history. The project root must
 be the top level of its Git repository.

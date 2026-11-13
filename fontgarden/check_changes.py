@@ -161,7 +161,7 @@ def main():
                         [sys.executable, '-m', 'fontgarden.check_design', '--ready'],
                         cwd=root, capture_output=True, text=True).stdout.split())
                 if name not in ready:
-                    errors.append(f'{label}: marked green but check_design.py --ready does not list it')
+                    errors.append(f'{label}: marked green but fontgarden check-design --ready does not list it')
 
     names = sorted(set().union(*changed.values()))
     both = [n for n in names if all(n in current[m] for m in masters)]
@@ -177,7 +177,7 @@ def main():
         lint = subprocess.run([sys.executable, '-m', 'fontgarden.glif_lint', *names],
                               cwd=root, capture_output=True, text=True)
         if lint.returncode:
-            errors += [f'glif_lint: {line.strip()}' for line in lint.stdout.splitlines()
+            errors += [f'lint-glifs: {line.strip()}' for line in lint.stdout.splitlines()
                        if line.startswith('  ')]
 
     counts = ', '.join(f'{m} {len(changed[m])}' for m in masters)
