@@ -80,6 +80,7 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
+| `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
 | `fgtools proof-web [--current \| --snapshot DIR \| --directory DIR] [--port N] [--check]` | Serve the font beside `reference-fonts/` in a browser. See [Web proof](#web-proof). |
 | `fgtools proof-web prepare --comparison FILE --output-dir DIR` | Prepare a Before and Candidate snapshot from fixed font files. |
@@ -103,6 +104,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.qa`, `fontgarden.fontspector_plugin` | `qa` |
 | `fontgarden.diff` | `diff` |
 | `fontgarden.install_tools` | `install-tools` |
+| `fontgarden.customize` | `customize` |
 | `fontgarden.proof_web` | `proof-web`. The web app is in `fontgarden/proof_web/app/`. |
 | `fontgarden.source_inventory` | None. Other modules import it to read glyph records. |
 | `fontgarden.project` | None. It finds the project and reads its layout. |

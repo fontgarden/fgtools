@@ -26,6 +26,7 @@ COMMANDS = {
     'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
     'diff': ('diff', [], 'Compare two builds with diffenator3'),
     'proof-web': ('proof_web', [], 'Serve the font beside reference-fonts/ in a browser'),
+    'customize': ('customize', [], 'Rename a project made from the Font.Garden project template'),
     'install-tools': ('install_tools', [], 'Install the pinned fontc and Fontspector binaries'),
 }
 
