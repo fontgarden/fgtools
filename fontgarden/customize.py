@@ -86,7 +86,13 @@ def main():
         sys.exit('The family name needs letters.')
     root = project.find_root()
     changed = customize(root, replacements(args.family, args.designer, args.email, args.repository))
-    print('\n'.join(changed) if changed else 'No placeholders found. The project is already named.')
+    if not changed:
+        print('No placeholders found. The project is already named.')
+        return
+    # Stage the changes, so that Git and the layout test see the renamed files.
+    subprocess.run(['git', 'add', '-A'], cwd=root, check=True)
+    print('\n'.join(changed))
+    print('The changes are staged. Review them with `git diff --staged`, then commit.')
 
 
 if __name__ == '__main__':
