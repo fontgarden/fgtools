@@ -67,9 +67,12 @@ def build_snapshot(config_path):
                 if not match:
                     raise ValueError(f'No glyph order in {lib}')
                 lib.write_text(text[:match.end(1)] + values + text[match.end(2):])
-        config['outputDir'] = str((source_root / config.get('outputDir', '../fonts')).resolve())
+        # Change only the outputDir line, so that gftools reads the text of
+        # the project's config.yaml and rejects what it would reject there.
+        output = (source_root / config.get('outputDir', '../fonts')).resolve()
+        text = re.sub(r'^outputDir:.*\n?', '', config_path.read_text(), flags=re.M)
         copied = target / config_path.name
-        copied.write_text(yaml.safe_dump(config, sort_keys=False))
+        copied.write_text(f'{text.rstrip()}\noutputDir: {output}\n')
         yield copied
 
 
