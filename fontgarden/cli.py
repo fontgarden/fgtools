@@ -22,7 +22,7 @@ COMMANDS = {
     'lint-curves': ('curve_lint', [], 'Curve fairness checks of one master'),
     'evaluate-drafting': ('evaluate_drafting', [], 'Prepare, score and compare drafting evaluations'),
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
-    'build': ('build_source_snapshot', [], 'Run gftools builder on a snapshot of the sources'),
+    'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
 }
 
 

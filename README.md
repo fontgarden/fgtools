@@ -61,7 +61,7 @@ be the top level of its Git repository.
 | `fontgarden evaluate-drafting score RUN` | Score the drafts in `RUN` against the project sources. |
 | `fontgarden evaluate-drafting compare RUN RUN` | Compare the scores of two runs. |
 | `fontgarden corrections [--all]` | List the reviews of purple drafts from the Git history. |
-| `fontgarden build [CONFIG]` | Run `gftools builder` on a temporary copy of the sources that has one glyph order in all masters. |
+| `fontgarden build` | Remove the fonts directory and build the fonts with `gftools builder` from a temporary copy of the sources that has one glyph order in all masters. |
 
 `fontgarden COMMAND --help` lists the arguments of a command. Each command
 runs one module, so `python -m fontgarden.status --print` is the same as
