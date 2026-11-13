@@ -3,21 +3,21 @@
 
 The specification is the `targets` section of
 sources/design.toml. Runebender measures the glyphs
-(`runebender agent call analyze_glyph`); this script holds the Virtua policy.
-It reads the sources and never writes them.
+(`runebender agent call analyze_glyph`); this script holds the Font.Garden
+policy. It reads the sources and never writes them.
 
-    check_design.py n a seen-ar        report on named glyphs, both masters
-    check_design.py --not-green        report on every glyph that is not green
-    check_design.py --green            run the checks on green glyphs (measures
-                                       how often the checks flag approved work)
-    check_design.py --observe          print stroke ranges of the green glyphs
-    check_design.py --ready            list composites that pass and are not green
-    check_design.py --queue            rank the glyphs that most composites wait on
+    fontgarden check-design n a seen-ar  report on named glyphs, all masters
+    fontgarden check-design --not-green  report on every glyph that is not green
+    fontgarden check-design --green      run the checks on green glyphs (measures
+                                         how often the checks flag approved work)
+    fontgarden check-design --observe    print stroke ranges of the green glyphs
+    fontgarden check-design --ready      list composites that pass and are not green
+    fontgarden check-design --queue      rank the glyphs that most composites wait on
 
 A contour glyph passes when its strokes are inside the target range, all
-points are on the 2-unit grid, the analyzer reports no kink, and the two
+points are on the 2-unit grid, the analyzer reports no kink, and all
 masters have the same structure. A composite passes when every part is green,
-the two masters use the same parts, and Runebender's anchor recipe gives the same
+all masters use the same parts, and Runebender's anchor recipe gives the same
 placement. A composite without a recipe needs review by eye. A pass is a filter before review, not approval.
 """
 from __future__ import annotations
@@ -28,16 +28,16 @@ import os
 import shutil
 import subprocess
 import sys
-import tomllib
 import unicodedata
 from pathlib import Path
 
-import source_inventory as inventory
+from fontgarden import project
+from fontgarden import source_inventory as inventory
 
-ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / 'sources/design.toml'
-CACHE = ROOT / 'out/check-design-cache'
-MASTERS = ['Regular', 'Bold']
+
+def cache_dir():
+    """The cache of Runebender measurements, in out/ of the current project."""
+    return project.load().root / 'out/check-design-cache'
 
 
 def find_runebender():
@@ -66,26 +66,27 @@ def script_of(name, record=None):
     return 'Symbol'
 
 
-def analyze(master, record, root=ROOT):
+def analyze(master, record, root=None):
     """Runebender's measurement of one glyph, cached by the GLIF digest."""
-    cached = CACHE / f"{record['sha256']}.json"
+    cached = cache_dir() / f"{record['sha256']}.json"
     if cached.exists():
         return json.loads(cached.read_text())
+    root = project.load().root if root is None else Path(root)
     run = subprocess.run(
         [runebender(), 'agent', 'call', 'analyze_glyph', '--font',
-         str(root / f'sources/VirtuaGrotesk-{master}.ufo'),
+         str(project.layout(root).ufo(master, root)),
          '--args', json.dumps({'glyph': record['glyph']})],
         capture_output=True, text=True)
     result = json.loads(run.stdout)['result']
-    CACHE.mkdir(parents=True, exist_ok=True)
+    cached.parent.mkdir(parents=True, exist_ok=True)
     cached.write_text(json.dumps(result))
     return result
 
 
-def recipes(master):
+def recipes(master, root=None):
     """Runebender's anchor recipes: glyph name to whether the source matches."""
     run = subprocess.run(
-        [runebender(), 'compose', str(ROOT / f'sources/VirtuaGrotesk-{master}.ufo'), '--json'],
+        [runebender(), 'compose', str(project.load(root).ufo(master)), '--json'],
         capture_output=True, text=True)
     try:
         return {row['glyph']: row['up_to_date'] for row in json.loads(run.stdout)['derived']}
@@ -120,9 +121,9 @@ def leaves(name, glyphs, seen=()):
     return out
 
 
-def check_contour(name, data, targets, root=ROOT, masters=MASTERS):
+def check_contour(name, data, targets, root=None, masters=None):
     findings = []
-    for master in masters:
+    for master in masters or list(data):
         record = data[master][name]
         analysis = analyze(master, record, root)
         if record['off_2_points']:
@@ -141,15 +142,15 @@ def check_contour(name, data, targets, root=ROOT, masters=MASTERS):
             outside = sorted({length for length in lengths if not low <= length <= high})
             if outside:
                 findings.append(f'{master}: {key} {outside} outside {low} to {high}')
-    regular, bold = (data[m][name] for m in MASTERS)
-    if regular['point_types'] != bold['point_types']:
+    first, *others = (data[m][name] for m in data)
+    if any(first['point_types'] != other['point_types'] for other in others):
         findings.append('masters: contour or point structure differs')
     return findings
 
 
 def check_composite(name, data, recipe):
     findings = []
-    for master in MASTERS:
+    for master in data:
         glyphs = data[master]
         record = glyphs[name]
         if not record['components']:
@@ -168,15 +169,15 @@ def check_composite(name, data, recipe):
             findings.append(f'{master}: no anchor recipe, so placement needs review by eye')
         elif not recipe[master][name]:
             findings.append(f'{master}: placement differs from the anchor recipe')
-    bases = [[c['base'] for c in data[m][name]['components']] for m in MASTERS]
-    if bases[0] != bases[1]:
+    bases = [[c['base'] for c in data[m][name]['components']] for m in data]
+    if any(other != bases[0] for other in bases[1:]):
         findings.append('masters: component lists differ')
     return findings
 
 
 def queue(data):
     """Contour glyphs that are not green, ranked by the composites that wait on them."""
-    for master in MASTERS:
+    for master in data:
         glyphs = data[master]
         blocked = {}
         for name, record in glyphs.items():
@@ -191,7 +192,7 @@ def queue(data):
 
 def observe(data, limit):
     """Stroke ranges of the green glyphs: the evidence for the targets."""
-    for master in MASTERS:
+    for master in limit:
         for script in ['Latin', 'Arabic', 'Hebrew']:
             pool = {'vertical_stem': [], 'horizontal_stroke': []}
             count = 0
@@ -220,23 +221,30 @@ def main():
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args()
 
-    contract = tomllib.loads(CONTRACT.read_text())
+    source = project.load()
+    masters = source.masters
+    contract = source.design()
     targets = contract.get('targets', {})
-    data = {m: inventory.load_master(ROOT, m, contract) for m in MASTERS}
+    data = {m: inventory.load_master(source.root, m, contract) for m in masters}
     if args.observe:
-        observe(data, {'Regular': 180, 'Bold': 300})
+        # The longest span that counts as a stroke: the largest stroke_limit
+        # of the master. A master without targets has no limit to observe with.
+        limit = {m: max(t['stroke_limit'] for t in targets[m].values())
+                 for m in masters if targets.get(m)}
+        observe(data, limit)
         return 0
     if args.queue:
         queue(data)
         return 0
 
-    names = [n for n in data['Regular'] if n in data['Bold']]
-    is_green = lambda n: all(data[m][n]['color']['name'] == 'green' for m in MASTERS)
-    is_composite = lambda n: not data['Regular'][n]['contours'] and not data['Bold'][n]['contours']
+    names = [n for n in data[masters[0]] if all(n in data[m] for m in masters)]
+    is_green = lambda n: all(data[m][n]['color']['name'] == 'green' for m in masters)
+    is_composite = lambda n: all(not data[m][n]['contours'] for m in masters)
     if args.glyphs:
         missing = [n for n in args.glyphs if n not in names]
         if missing:
-            sys.exit(f"Not in both masters: {', '.join(missing)}")
+            which = 'both' if len(masters) == 2 else 'all'
+            sys.exit(f"Not in {which} masters: {', '.join(missing)}")
         names = args.glyphs
     elif args.green:
         names = [n for n in names if is_green(n)]
@@ -247,7 +255,7 @@ def main():
     else:
         parser.error('name glyphs or pass --not-green, --green, --ready, --queue or --observe')
 
-    recipe = {m: recipes(m) for m in MASTERS} if any(is_composite(n) for n in names) else {}
+    recipe = {m: recipes(m) for m in masters} if any(is_composite(n) for n in names) else {}
     report = {}
     for name in names:
         if is_composite(name):

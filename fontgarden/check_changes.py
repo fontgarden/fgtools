@@ -5,27 +5,31 @@ Use this after an agent has edited glyphs, in particular after an unattended
 run. It compares the UFO sources in the working tree with a base revision
 and reads nothing else.
 
-    check_changes.py                        compare with main
-    check_changes.py --base HEAD~3          compare with another revision
-    check_changes.py --glyphs "a e seen-ar" allow changes to these glyphs only
-    check_changes.py --proof out/review     also draw SVG proof sheets of the
-                                            changed glyphs, before and after
+    fontgarden check-changes                        compare with main
+    fontgarden check-changes --base HEAD~3          compare with another revision
+    fontgarden check-changes --glyphs "a e seen-ar" allow changes to these glyphs only
+    fontgarden check-changes --proof out/review     also draw SVG proof sheets of
+                                                    the changed glyphs, before
+                                                    and after
 
 It fails (exit status 1) when:
 
 - a glyph that is green at the base revision changed;
 - the contours of a glyph changed and it is not purple (a change of anchors,
   advance or components only does not need purple);
-- a changed composite is green but `check_design.py --ready` does not list it;
+- a changed composite is green but `fontgarden check-design --ready` does not
+  list it;
 - a glyph outside --glyphs changed;
 - a source file other than a glyph file changed, unless --allow-other;
 - a changed glyph has points off the 2-unit grid, or a different structure in
-  the two masters;
-- `glif_lint.py` finds a structural fault in a changed glyph, for example a
+  the masters;
+- `fontgarden lint-glifs` finds a structural fault in a changed glyph, for example a
   missing component base or a curve without two off-curve points.
 
 It also prints the other design check findings (stroke ranges, kinks) for each
 changed glyph. Those are for review and do not fail the check.
+
+The project root must be the top level of its Git repository.
 """
 from __future__ import annotations
 
@@ -35,19 +39,18 @@ import re
 import subprocess
 import sys
 import tempfile
-import tomllib
 from pathlib import Path
 
-import check_design
-import source_inventory as inventory
+from fontgarden import check_design
+from fontgarden import project
+from fontgarden import source_inventory as inventory
 
-ROOT = Path(__file__).resolve().parents[1]
-MASTERS = check_design.MASTERS
 HARD = ('off the 2-unit grid', 'structure differs', 'component lists differ', 'does not resolve')
 
 
 def git(*args):
-    return subprocess.run(['git', *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    return subprocess.run(['git', *args], cwd=project.load().root, capture_output=True, text=True,
+                          check=True).stdout
 
 
 def changed_files(base):
@@ -57,17 +60,17 @@ def changed_files(base):
 
 
 def base_contents(base, master):
-    path = f'sources/VirtuaGrotesk-{master}.ufo/glyphs/contents.plist'
+    path = f'{project.load().ufo_relative(master)}/glyphs/contents.plist'
     return plistlib.loads(git('show', f'{base}:{path}').encode())
 
 
 def base_colors(base, contract):
     """Mark color of every glyph at the base revision, by master."""
     out = {}
-    for master in MASTERS:
+    for master in project.load().masters:
         out[master] = {}
         for name, filename in base_contents(base, master).items():
-            path = f'sources/VirtuaGrotesk-{master}.ufo/glyphs/{filename}'
+            path = f'{project.load().ufo_relative(master)}/glyphs/{filename}'
             text = git('show', f'{base}:{path}')
             lib = {}
             if '<key>public.markColor</key>' in text:
@@ -90,16 +93,17 @@ def draw_proofs(base, glyphs, directory):
     """SVG proof sheets of the changed glyphs, at the base and in the working tree."""
     directory.mkdir(parents=True, exist_ok=True)
     binary = check_design.runebender()
+    source = project.load()
     with tempfile.TemporaryDirectory() as scratch:
         git('worktree', 'add', '--detach', scratch, base)
         try:
-            for master in MASTERS:
+            for master in source.masters:
                 names = ','.join(sorted(glyphs[master]))
                 if not names:
                     continue
-                for label, root in (('before', Path(scratch)), ('after', ROOT)):
+                for label, root in (('before', Path(scratch)), ('after', source.root)):
                     out = directory / f'{master}-{label}.svg'
-                    subprocess.run([binary, 'proof', str(root / f'sources/VirtuaGrotesk-{master}.ufo'),
+                    subprocess.run([binary, 'proof', str(source.ufo(master, root)),
                                     '--glyphs', names, '--out', str(out)],
                                    capture_output=True, check=True)
                     print(f'proof: {out}')
@@ -115,17 +119,19 @@ def main():
     parser.add_argument('--proof', type=Path)
     args = parser.parse_args()
 
-    contract = tomllib.loads(check_design.CONTRACT.read_text())
-    current = {m: inventory.load_master(ROOT, m, contract) for m in MASTERS}
+    source = project.load()
+    root, masters = source.root, source.masters
+    contract = source.design()
+    current = {m: inventory.load_master(root, m, contract) for m in masters}
     before = base_colors(args.base, contract)
     scope = set(args.glyphs.split())
     errors, notes = [], []
 
     by_file = {}
-    for master in MASTERS:
+    for master in masters:
         for name, record in current[master].items():
             by_file[record['path']] = (master, name)
-    changed = {m: set() for m in MASTERS}
+    changed = {m: set() for m in masters}
     for path in changed_files(args.base):
         if path in by_file:
             master, name = by_file[path]
@@ -136,7 +142,7 @@ def main():
             notes.append(f'{path}: changed')
 
     ready = None
-    for master in MASTERS:
+    for master in masters:
         for name in sorted(changed[master]):
             record = current[master][name]
             color = record['color']['name']
@@ -146,36 +152,36 @@ def main():
                 errors.append(f'{label}: was green at {args.base} and changed')
             if scope and name not in scope:
                 errors.append(f'{label}: outside --glyphs')
-            drawn = re.findall(r'<contour>.*?</contour>', (ROOT / record['path']).read_text(), re.S)
+            drawn = re.findall(r'<contour>.*?</contour>', (root / record['path']).read_text(), re.S)
             if drawn and drawn != contours_at(args.base, record['path']) and color != 'purple':
                 errors.append(f'{label}: contours changed and the glyph is {color}, not purple')
             if not record['contours'] and color == 'green' and was != 'green':
                 if ready is None:
                     ready = set(subprocess.run(
-                        [sys.executable, str(ROOT / 'scripts/check_design.py'), '--ready'],
-                        capture_output=True, text=True).stdout.split())
+                        [sys.executable, '-m', 'fontgarden.check_design', '--ready'],
+                        cwd=root, capture_output=True, text=True).stdout.split())
                 if name not in ready:
                     errors.append(f'{label}: marked green but check_design.py --ready does not list it')
 
-    names = sorted(changed['Regular'] | changed['Bold'])
-    both = [n for n in names if n in current['Regular'] and n in current['Bold']]
-    recipe = {m: check_design.recipes(m) for m in MASTERS} if both else {}
+    names = sorted(set().union(*changed.values()))
+    both = [n for n in names if all(n in current[m] for m in masters)]
+    recipe = {m: check_design.recipes(m) for m in masters} if both else {}
     for name in both:
-        composite = not current['Regular'][name]['contours'] and not current['Bold'][name]['contours']
+        composite = all(not current[m][name]['contours'] for m in masters)
         findings = (check_design.check_composite(name, current, recipe) if composite
                     else check_design.check_contour(name, current, contract.get('targets', {})))
         for finding in findings:
             (errors if any(h in finding for h in HARD) else notes).append(f'{name}: {finding}')
 
     if names:
-        lint = subprocess.run([sys.executable, str(ROOT / 'scripts/glif_lint.py'), *names],
-                              capture_output=True, text=True)
+        lint = subprocess.run([sys.executable, '-m', 'fontgarden.glif_lint', *names],
+                              cwd=root, capture_output=True, text=True)
         if lint.returncode:
             errors += [f'glif_lint: {line.strip()}' for line in lint.stdout.splitlines()
                        if line.startswith('  ')]
 
-    print(f"Changed glyphs since {args.base}: Regular {len(changed['Regular'])}, "
-          f"Bold {len(changed['Bold'])}")
+    counts = ', '.join(f'{m} {len(changed[m])}' for m in masters)
+    print(f"Changed glyphs since {args.base}: {counts}")
     for line in notes:
         print(f'  note: {line}')
     for line in errors:

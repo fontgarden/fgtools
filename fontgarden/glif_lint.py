@@ -14,17 +14,14 @@ Checks, per master:
 Exit code 1 if anything is found.
 
 Usage:
-    ./.venv/bin/python scripts/glif_lint.py [glyph ...]
+    fontgarden lint-glifs [glyph ...]
 """
 
-import pathlib
 import plistlib
 import sys
 import xml.etree.ElementTree as ET
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-MASTERS = {"Regular": REPO / "sources" / "VirtuaGrotesk-Regular.ufo",
-           "Bold": REPO / "sources" / "VirtuaGrotesk-Bold.ufo"}
+from fontgarden import project
 
 
 def contents(ufo):
@@ -54,10 +51,11 @@ def segments(points):
             cur.append(p)
 
 
-def lint(only=None):
+def lint(only=None, root=None):
     findings = []
     shapes = {}
-    for mname, ufo in MASTERS.items():
+    masters = project.load(root).ufos
+    for mname, ufo in masters.items():
         cmap = contents(ufo)
         shapes[mname] = {}
         for name, fn in sorted(cmap.items()):
@@ -110,21 +108,24 @@ def lint(only=None):
                                 f"({end[0]:.0f},{end[1]:.0f})")
             shapes[mname][name] = ([len(p) for p in cs], comps)
 
-    common = set(shapes["Regular"]) & set(shapes["Bold"])
-    for name in sorted(common):
-        a, b = shapes["Regular"][name], shapes["Bold"][name]
-        if a[0] != b[0]:
-            findings.append(
-                f"{name}: point counts differ Regular {a[0]} vs Bold {b[0]}")
-        if a[1] != b[1]:
-            findings.append(
-                f"{name}: components differ Regular {a[1]} vs Bold {b[1]}")
-    only_a = set(shapes["Regular"]) - set(shapes["Bold"])
-    only_b = set(shapes["Bold"]) - set(shapes["Regular"])
-    for n in sorted(only_a):
-        findings.append(f"{n}: present in Regular only")
-    for n in sorted(only_b):
-        findings.append(f"{n}: present in Bold only")
+    # Each master is compared with the first master.
+    first, *others = masters
+    for other in others:
+        common = set(shapes[first]) & set(shapes[other])
+        for name in sorted(common):
+            a, b = shapes[first][name], shapes[other][name]
+            if a[0] != b[0]:
+                findings.append(
+                    f"{name}: point counts differ {first} {a[0]} vs {other} {b[0]}")
+            if a[1] != b[1]:
+                findings.append(
+                    f"{name}: components differ {first} {a[1]} vs {other} {b[1]}")
+        only_a = set(shapes[first]) - set(shapes[other])
+        only_b = set(shapes[other]) - set(shapes[first])
+        for n in sorted(only_a):
+            findings.append(f"{n}: present in {first} only")
+        for n in sorted(only_b):
+            findings.append(f"{n}: present in {other} only")
 
     if findings:
         print(f"{len(findings)} finding(s):")
@@ -135,5 +136,9 @@ def lint(only=None):
     return 0
 
 
+def main():
+    return lint(set(sys.argv[1:]) or None)
+
+
 if __name__ == "__main__":
-    sys.exit(lint(set(sys.argv[1:]) or None))
+    sys.exit(main())

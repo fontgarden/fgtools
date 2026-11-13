@@ -4,13 +4,15 @@
 A drafting method is anything that draws glyphs: an agent, a model or a
 script. The held-out glyphs and the tasks are in sources/held-out-glyphs.toml.
 
-    evaluate_drafting.py prepare <task> <run>   copy the sources into
-                                                <run>/sources and set the task
-    evaluate_drafting.py score <run>            score the drafts in that copy
-    evaluate_drafting.py compare <run> <run>    compare the scores of two runs
+    fontgarden evaluate-drafting prepare <task> <run>  copy the sources into
+                                                       <run>/sources and set
+                                                       the task
+    fontgarden evaluate-drafting score <run>           score the drafts in that copy
+    fontgarden evaluate-drafting compare <run> <run>   compare the scores of two runs
 
-The tasks are redraw, bold, repair and relatives. Give the method only
-<run>/sources, so that it cannot read the references. It edits the glyphs in
+The tasks are redraw, bold, repair and relatives. The bold task hides every
+master after the first (the default master) and scores the drafts of those
+masters. Give the method only <run>/sources, so that it cannot read the references. It edits the glyphs in
 place. `score` reports for each glyph and master:
 
     iou         overlap of the filled shapes with Eli's drawing, 1.0 is equal
@@ -18,10 +20,10 @@ place. `score` reports for each glyph and master:
     advance     difference of the advance width
     moved       points that differ from Eli's drawing, when the point
                 structure is the same
-    compatible  the point structure matches the other master
+    compatible  the point structure matches the other masters
     off 8       points off the 8-unit grid (new drafts use 8)
-    curves      flags from curve_lint.py
-    design      findings from check_design.py; needs Runebender
+    curves      flags from `fontgarden lint-curves`
+    design      findings from `fontgarden check-design`; needs Runebender
 
 The last three columns show the draft, then Eli's drawing: "4/3". Eli's
 drawings have intended off-grid points and findings, so compare the two.
@@ -49,14 +51,11 @@ from fontTools.pens.pointPen import PointToSegmentPen
 from fontTools.ufoLib.glifLib import readGlyphFromString
 from PIL import Image, ImageChops, ImageDraw
 
-import check_design
-import source_inventory
-from curve_lint import lint_glyph
+from fontgarden import check_design
+from fontgarden import project
+from fontgarden import source_inventory
+from fontgarden.curve_lint import lint_glyph
 
-ROOT = Path(__file__).resolve().parents[1]
-CASES = ROOT / 'sources/held-out-glyphs.toml'
-CONTRACT = ROOT / 'sources/design.toml'
-MASTERS = ['Regular', 'Bold']
 TASKS = ['redraw', 'bold', 'repair', 'relatives']
 RED = '1,0,0,1'
 SCALE = 0.25          # raster pixels per font unit
@@ -158,37 +157,45 @@ def compare(reference, candidate):
                 distance=round(float(distance), 1), advance=advance, moved=moved)
 
 
-def glif_path(sources, master, name):
-    ufo = sources / f'VirtuaGrotesk-{master}.ufo'
+def glif_path(root, master, name):
+    """The GLIF file of a glyph in the project at `root`, or in a copy of its sources."""
+    root = Path(root)
+    ufo = project.layout(root).ufo(master, root)
     contents = plistlib.loads((ufo / 'glyphs/contents.plist').read_bytes())
     return ufo / 'glyphs' / contents[name]
 
 
-@functools.cache
-def green_masters():
+def green_masters(root=None):
     """For each glyph, the masters in which it is green."""
-    contract = tomllib.loads(CONTRACT.read_text())
+    return _green_masters(project.load(root).root)
+
+
+@functools.cache
+def _green_masters(root):
+    source = project.load(root)
+    contract = source.design()
     found = {}
-    for master in MASTERS:
-        for name, record in source_inventory.load_master(ROOT, master, contract).items():
+    for master in source.masters:
+        for name, record in source_inventory.load_master(root, master, contract).items():
             if record['color']['name'] == 'green':
                 found.setdefault(name, []).append(master)
     return found
 
 
-def cases(task):
+def cases(task, root=None):
     """The cases of a task: glyph, the masters it is hidden or changed in,
     the masters it is scored in, and the glyphs it is drawn from."""
-    table = tomllib.loads(CASES.read_text())[task]
-    green = green_masters()
+    source = project.load(root)
+    table = tomllib.loads(source.held_out.read_text())[task]
+    green = green_masters(root)
     rows = table['cases'] if task == 'relatives' else [{'glyph': g} for g in table['glyphs']]
     out = []
     for row in rows:
         glyph = row['glyph']
         scored = green.get(glyph, [])
         if task == 'bold':
-            scored = [m for m in scored if m == 'Bold']
-        changed = scored if task in ('bold', 'repair') else MASTERS
+            scored = [m for m in scored if m != source.masters[0]]
+        changed = scored if task in ('bold', 'repair') else source.masters
         out.append(dict(glyph=glyph, changed=changed, scored=scored,
                         donors=row.get('from', [])))
     return out
@@ -238,18 +245,20 @@ def displace(path, seed):
     path.write_text(text)
 
 
-def prepare(task, run):
+def prepare(task, run, root=None):
     if run.exists():
         sys.exit(f'{run} exists. Name a new directory.')
+    source = project.load(root)
     sources = run / 'sources'
-    for master in MASTERS:
-        name = f'VirtuaGrotesk-{master}.ufo'
-        shutil.copytree(ROOT / 'sources' / name, sources / name)
-    shutil.copy(ROOT / 'sources/VirtuaGrotesk.designspace', sources)
-    rows = cases(task)
+    for master in source.masters:
+        shutil.copytree(source.ufo(master), source.ufo(master, run))
+    designspace = run / source.designspace.relative_to(source.root)
+    designspace.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(source.designspace, designspace.parent)
+    rows = cases(task, root)
     for row in rows:
         for master in row['changed']:
-            path = glif_path(sources, master, row['glyph'])
+            path = glif_path(run, master, row['glyph'])
             if task == 'repair':
                 displace(path, zlib.crc32(f"{row['glyph']}/{master}".encode()))
             else:
@@ -269,28 +278,31 @@ def checks(root, data, master, glyph, contract, design):
                                               root=root, masters=[master])
         found = len([f for f in findings if not f.startswith('masters:')])
     return dict(off_8=record['off_8_points'],
-                curves=len(lint_glyph(glif_path(root / 'sources', master, glyph), glyph)),
+                curves=len(lint_glyph(glif_path(root, master, glyph), glyph)),
                 design=found)
 
 
-def score(run):
+def score(run, root=None):
     setup = json.loads((run / 'evaluation.json').read_text())
-    contract = tomllib.loads(CONTRACT.read_text())
-    data = {m: source_inventory.load_master(run, m, contract) for m in MASTERS}
-    reference = {m: source_inventory.load_master(ROOT, m, contract) for m in MASTERS}
+    source = project.load(root)
+    root, masters = source.root, source.masters
+    contract = source.design()
+    data = {m: source_inventory.load_master(run, m, contract) for m in masters}
+    reference = {m: source_inventory.load_master(root, m, contract) for m in masters}
     design = check_design.find_runebender() is not None
     rows = []
     for case in setup['cases']:
         for master in case['scored']:
             glyph = case['glyph']
             row = dict(glyph=glyph, master=master,
-                       **compare(read(glif_path(ROOT / 'sources', master, glyph)),
-                                 read(glif_path(run / 'sources', master, glyph))))
-            other = data['Bold' if master == 'Regular' else 'Regular'].get(glyph)
-            row['compatible'] = (bool(data[master][glyph]['contours']) and bool(other)
-                                 and data[master][glyph]['point_types'] == other['point_types'])
+                       **compare(read(glif_path(root, master, glyph)),
+                                 read(glif_path(run, master, glyph))))
+            others = [data[m].get(glyph) for m in masters if m != master]
+            row['compatible'] = (bool(data[master][glyph]['contours']) and all(others)
+                                 and all(data[master][glyph]['point_types'] == other['point_types']
+                                         for other in others))
             row['draft'] = checks(run, data, master, glyph, contract, design)
-            row['reference'] = checks(ROOT, reference, master, glyph, contract, design)
+            row['reference'] = checks(root, reference, master, glyph, contract, design)
             rows.append(row)
     drawn = [r for r in rows if r['distance'] is not None]
     summary = dict(task=setup['task'], scored=len(rows), drawn=len(drawn),

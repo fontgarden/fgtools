@@ -10,10 +10,12 @@
 3. INFLECTIONS: a curve segment whose curvature changes sign. This is
    correct in an S spine and a fault in a bowl.
 
-    ./.venv/bin/python scripts/curve_lint.py Bold b d o
-    ./.venv/bin/python scripts/curve_lint.py Regular --all
+    fontgarden lint-curves Bold b d o
+    fontgarden lint-curves Regular --all
 """
 import argparse, math, plistlib, re
+
+from fontgarden import project
 
 TOL_CREST = 6
 TENSION_RATIO = 2.6
@@ -216,13 +218,14 @@ def join_audit(conts):
 
 
 def main():
+    source=project.load()
     ap=argparse.ArgumentParser()
-    ap.add_argument('master',choices=['Regular','Bold'])
+    ap.add_argument('master',choices=source.masters)
     ap.add_argument('glyphs',nargs='*')
     ap.add_argument('--all',action='store_true')
     ap.add_argument('--joins',action='store_true',help='Audit all curve joins, including unmarked corners; human intent still requires review')
     a=ap.parse_args()
-    gdir=f'sources/VirtuaGrotesk-{a.master}.ufo/glyphs'
+    gdir=f'{source.ufo(a.master)}/glyphs'
     files=plistlib.load(open(f'{gdir}/contents.plist','rb'))
     names=sorted(files) if a.all else a.glyphs
     unknown=[g for g in names if g not in files]

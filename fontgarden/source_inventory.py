@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read master glyph records, mark colors and file digests from the UFO sources.
 
-Reading never changes a source file. Paths are repository relative.
+Reading never changes a source file. Paths are relative to the project root.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 import plistlib
 import xml.etree.ElementTree as ET
 
-ROOT = Path(__file__).resolve().parents[1]
+from fontgarden import project
 
 
 def digest(path):
@@ -57,7 +57,8 @@ def color_state(lib, contract):
 
 
 def load_master(root, master, contract):
-    ufo = root / f"sources/VirtuaGrotesk-{master}.ufo"
+    root = Path(root)
+    ufo = project.layout(root).ufo(master, root)
     contents = plistlib.loads((ufo / "glyphs/contents.plist").read_bytes())
     glyphs = {}
     for name, filename in contents.items():

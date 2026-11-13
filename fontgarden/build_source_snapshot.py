@@ -4,6 +4,10 @@
 Per-master feature coordinates make fontTools merge GPOS tables. That merge
 requires the same glyph order in every master; source editor orders can differ.
 Normalize only the copied lib.plist ordering. All live source files stay intact.
+
+    fontgarden build [config.yaml]   run gftools builder on a snapshot of the
+                                     sources; the default is the configuration
+                                     of the current project
 """
 from contextlib import contextmanager
 from pathlib import Path
@@ -20,7 +24,7 @@ def build_snapshot(config_path):
     config_path=Path(config_path).resolve()
     config=yaml.safe_load(config_path.read_text())
     source_root=config_path.parent
-    with tempfile.TemporaryDirectory(prefix='virtua-build-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='fontgarden-build-') as temporary:
         target=(Path(temporary)/'sources').resolve()
         shutil.copytree(source_root,target,ignore=shutil.ignore_patterns('archive','instance_ufos','build.ninja','.ninja_log'))
         for designspace in config['sources']:
@@ -31,7 +35,7 @@ def build_snapshot(config_path):
             masters=[(path.parent/s.get('filename')).resolve() for s in doc.findall('sources/source')]
             if not masters or any(not p.is_relative_to(target) for p in masters):
                 raise ValueError('Designspace sources must be within the copied source directory')
-            # First source is the current default Regular master; preserve its order.
+            # The first source is the default master; preserve its order.
             first=plistlib.loads((masters[0]/'lib.plist').read_bytes())['public.glyphOrder']
             all_names=set()
             for master in masters:
@@ -48,7 +52,12 @@ def build_snapshot(config_path):
         copied.write_text(yaml.safe_dump(config,sort_keys=False))
         yield copied
 
-if __name__=='__main__':
+def main():
     import sys
-    with build_snapshot(sys.argv[1]) as config:
+    from fontgarden import project
+    config_path=sys.argv[1] if len(sys.argv)>1 else project.load().config_path
+    with build_snapshot(config_path) as config:
         subprocess.run(['gftools','builder',str(config)],check=True)
+
+if __name__=='__main__':
+    main()

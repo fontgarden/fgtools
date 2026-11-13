@@ -16,8 +16,8 @@ purple; the column "against" gives the mark of that version:
     accepted   the same contours and advance as the draft
     corrected  other contours or another advance
 
-    list_corrections.py          the open corrections, then a summary by month
-    list_corrections.py --all    every review, then the summary
+    fontgarden corrections          the open corrections, then a summary by month
+    fontgarden corrections --all    every review, then the summary
 
 A correction is open until a tracked file or a later commit message cites the
 first 7 or more characters of its review commit: a rule entry ("Seen in"), a
@@ -28,6 +28,8 @@ increases. Edits of a glyph that stays purple are not visible, so Eli
 changes the mark in the commit that grades or corrects the draft.
 
 Reviews before START are not listed. They predate the grades.
+
+The project root must be the top level of its Git repository.
 """
 from __future__ import annotations
 
@@ -35,30 +37,26 @@ import argparse
 import re
 import subprocess
 import sys
-import tomllib
-from pathlib import Path
 
-import evaluate_drafting as evaluation
+from fontgarden import evaluate_drafting as evaluation
+from fontgarden import project
 
-ROOT = Path(__file__).resolve().parents[1]
-GLYPHS = 'sources/VirtuaGrotesk-*.ufo/glyphs/*.glif'
-COLORS = tomllib.loads((ROOT / 'sources/design.toml').read_text())['colors']
 MARK = re.compile(r'<key>public.markColor</key>\s*<string>([^<]*)</string>')
 HASH = re.compile(r'\b[0-9a-f]{7,40}\b')
 START = '2026-11-13'
 
 
-def git(*args, root=ROOT, check=True):
-    return subprocess.run(['git', *args], cwd=root, capture_output=True, text=True,
-                          check=check).stdout
+def git(*args, root=None, check=True):
+    return subprocess.run(['git', *args], cwd=project.load(root).root, capture_output=True,
+                          text=True, check=check).stdout
 
 
-def color(text):
+def color(text, colors=None):
     found = MARK.search(text)
     if not found:
         return 'none'
     rgba = [float(v) for v in found[1].split(',')]
-    for name, record in COLORS.items():
+    for name, record in (colors or project.load().design()['colors']).items():
         if any(all(abs(a - b) < 0.015 for a, b in zip(rgba, known)) for known in record['rgba']):
             return name
     return 'unknown'
@@ -67,11 +65,11 @@ def color(text):
 GRADES = {'red': 0, 'orange': 1, 'yellow': 2, 'green': 3}
 
 
-def grade(draft, after):
+def grade(draft, after, colors=None):
     """The mark that a review gives, or None when the change is not a review."""
-    if color(draft) != 'purple' or color(after) == 'purple':
+    if color(draft, colors) != 'purple' or color(after, colors) == 'purple':
         return None
-    return color(after)
+    return color(after, colors)
 
 
 def outcome(draft, final):
@@ -85,8 +83,8 @@ def outcome(draft, final):
 
 class Blobs:
     """Read blobs through one `git cat-file --batch` process."""
-    def __init__(self, root=ROOT):
-        self.process = subprocess.Popen(['git', 'cat-file', '--batch'], cwd=root,
+    def __init__(self, root=None):
+        self.process = subprocess.Popen(['git', 'cat-file', '--batch'], cwd=project.load(root).root,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     def __call__(self, blob):
@@ -103,13 +101,18 @@ class Blobs:
         self.process.stdout.close()
 
 
-def reviews(root=ROOT):
+def reviews(root=None):
     """Every review in the history, oldest first."""
+    source = project.load(root)
+    colors = source.design()['colors']
+    color_of = lambda text: color(text, colors)
+    folders = {f'{source.ufo_relative(m)}/glyphs/': m for m in source.masters}
+    glyphs = [f'{folder}*.glif' for folder in folders]
     blob, commit, date = Blobs(root), None, None
     rows, waiting, latest = [], {}, {}
     try:
         for line in git('log', '--reverse', '--raw', '--no-abbrev', '--no-renames',
-                        '--diff-filter=M', '--format=@%H %as', '--', GLYPHS, root=root).splitlines():
+                        '--diff-filter=M', '--format=@%H %as', '--', *glyphs, root=root).splitlines():
             if line.startswith('@'):
                 commit, date = line[1:].split()
                 continue
@@ -118,27 +121,27 @@ def reviews(root=ROOT):
             meta, path = line.split('\t')
             old, new = meta.split()[2:4]
             draft, after = blob(old), blob(new)
-            mark = grade(draft, after)
+            mark = grade(draft, after, colors)
             if mark:
                 row = dict(commit=commit, date=date, glyph=re.search(r'<glyph name="([^"]+)"', draft)[1],
-                           master=path.split('VirtuaGrotesk-')[1].split('.ufo')[0], grade=mark,
+                           master=folders[path.rsplit('/', 1)[0] + '/'], grade=mark,
                            against=None, result=None, iou=None, distance=None, draft=draft)
                 rows.append(row)
                 waiting.setdefault(path, []).append(row)
-            if color(after) != 'purple':
+            if color_of(after) != 'purple':
                 latest[path] = after
-            if color(after) == 'green':
+            if color_of(after) == 'green':
                 for row in waiting.pop(path, []):
                     row.update(outcome(row.pop('draft'), after), against='green')
     finally:
         blob.close()
     for path, group in waiting.items():
         for row in group:
-            row.update(outcome(row.pop('draft'), latest[path]), against=color(latest[path]))
+            row.update(outcome(row.pop('draft'), latest[path]), against=color_of(latest[path]))
     return rows
 
 
-def citations(root=ROOT):
+def citations(root=None):
     """7-character prefixes of the hashes in commit messages and tracked files."""
     text = git('log', '--format=%B', root=root) + git(
         'grep', '-h', '-I', '-E', r'\b[0-9a-f]{7,40}\b', '--', '.', ':!sources/*.ufo', root=root, check=False)
