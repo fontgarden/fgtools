@@ -74,6 +74,8 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting prepare TASK RUN` | Copy the sources into `RUN/sources` and hide or move the held-out glyphs. `TASK` is `redraw`, `bold`, `repair` or `relatives`. |
 | `fgtools evaluate-drafting score RUN` | Score the drafts in `RUN` against the project sources. |
 | `fgtools evaluate-drafting compare RUN RUN` | Compare the scores of two runs. |
+| `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
+| `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
@@ -94,6 +96,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.glif_lint` | `lint-glifs` |
 | `fontgarden.curve_lint` | `lint-curves` |
 | `fontgarden.evaluate_drafting` | `evaluate-drafting` |
+| `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
 | `fontgarden.list_corrections` | `corrections` |
 | `fontgarden.build_source_snapshot` | `build` |
 | `fontgarden.diff` | `diff` |

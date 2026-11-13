@@ -51,6 +51,7 @@ from fontTools.pens.pointPen import PointToSegmentPen
 from fontTools.ufoLib.glifLib import readGlyphFromString
 from PIL import Image, ImageChops, ImageDraw
 
+from fontgarden import benchmark
 from fontgarden import check_design
 from fontgarden import project
 from fontgarden import source_inventory
@@ -245,6 +246,41 @@ def displace(path, seed):
     path.write_text(text)
 
 
+BRIEFS = {
+    'redraw': 'Draw each glyph below from nothing, in the masters named. The glyph is '
+              'empty and its advance width is 0.',
+    'bold': 'Draw the Bold master of each glyph below. The Regular master of the glyph '
+            'is complete; the Bold is empty and its advance width is 0.',
+    'repair': 'Some points of each glyph below were moved by 16 to 32 units, with their '
+              'handles. Move them back to where the design needs them.',
+    'relatives': 'Draw each glyph below from the glyphs of the same construction that '
+                 'are named after it. The glyph is empty and its advance width is 0.',
+}
+
+RULES = """## Rules
+
+- Work only in this directory. Edit only the GLIF files of the glyphs above,
+  in sources/. Do not read files outside this directory or a Git history.
+- Write each glyph in the existing GLIF style. Keep the contours, the point
+  types and the components of a glyph the same in every master.
+- Put every point on the 2-unit grid. Put structural points on the 8-unit
+  grid. sources/design.toml gives the grid and the stroke targets.
+- Set an advance width for each glyph you draw.
+- `fgtools lint-glifs` and `fgtools lint-curves MASTER GLYPH --joins` check
+  your work from this directory.
+- Stop when every glyph above is drawn.
+"""
+
+
+def brief(task, rows):
+    """The written task that every drafting method gets: TASK.md."""
+    lines = [f'# Drafting task: {task}', '', BRIEFS[task], '']
+    for row in rows:
+        donors = f" (from {', '.join(row['donors'])})" if row['donors'] else ''
+        lines.append(f"- {row['glyph']}: {', '.join(row['changed'])}{donors}")
+    return '\n'.join(lines) + '\n\n' + RULES
+
+
 def prepare(task, run, root=None):
     if run.exists():
         sys.exit(f'{run} exists. Name a new directory.')
@@ -255,6 +291,11 @@ def prepare(task, run, root=None):
     designspace = run / source.designspace.relative_to(source.root)
     designspace.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(source.designspace, designspace.parent)
+    # config.yaml and design.toml make the copy a project for the fgtools
+    # commands, and give the method the grid and the stroke targets.
+    for name in ('config.yaml', 'design.toml'):
+        if (source.sources / name).exists():
+            shutil.copy(source.sources / name, sources / name)
     rows = cases(task, root)
     for row in rows:
         for master in row['changed']:
@@ -264,6 +305,7 @@ def prepare(task, run, root=None):
             else:
                 hide(path)
     (run / 'evaluation.json').write_text(json.dumps(dict(task=task, cases=rows), indent=1) + '\n')
+    (run / 'TASK.md').write_text(brief(task, rows))
     print(f'{task}: {len(rows)} glyphs prepared in {sources}')
 
 
@@ -349,11 +391,23 @@ def main():
     c = sub.add_parser('compare')
     c.add_argument('first', type=Path)
     c.add_argument('second', type=Path)
+    r = sub.add_parser('run', help='prepare RUN, run an agent harness in it and score it')
+    r.add_argument('task', choices=TASKS)
+    r.add_argument('run', type=Path)
+    r.add_argument('--harness', required=True)
+    r.add_argument('--model')
+    r.add_argument('--max-time', type=int, default=3600, help='seconds')
+    t = sub.add_parser('table', help='compare the scores, time and cost of runs')
+    t.add_argument('runs', type=Path, nargs='+')
     args = parser.parse_args()
     if args.command == 'prepare':
         prepare(args.task, args.run)
     elif args.command == 'score':
         score(args.run)
+    elif args.command == 'run':
+        benchmark.run(args.task, args.run, args.harness, args.model, args.max_time)
+    elif args.command == 'table':
+        benchmark.table(args.runs)
     else:
         compare_runs(args.first, args.second)
 

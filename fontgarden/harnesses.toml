@@ -1,0 +1,29 @@
+# Agent harnesses for `fgtools evaluate-drafting run`.
+#
+# Each harness runs without a person, in the run directory, with the same
+# prompt. In `command`, {prompt}, {model} and {max_time} are replaced; an
+# argument that contains {model} is left out when no model is given.
+# `version` prints the version of the harness. `cost` names the field of the
+# JSON output that gives the cost in US dollars, when the harness prints one.
+#
+# The permissions keep each harness to the run directory: file edits there,
+# and the shell commands that the task needs. Do not turn the permission
+# checks off.
+
+[claude]
+command = ["claude", "-p", "{prompt}", "--output-format", "json",
+           "--permission-mode", "acceptEdits",
+           "--allowedTools", "Read,Edit,Write,Glob,Grep,Bash(fgtools:*),Bash(python3:*),Bash(ls:*)",
+           "--model", "{model}"]
+version = ["claude", "--version"]
+cost = "total_cost_usd"
+
+[codex]
+command = ["codex", "exec", "--sandbox", "workspace-write", "--skip-git-repo-check",
+           "--model", "{model}", "{prompt}"]
+version = ["codex", "--version"]
+
+[omp]
+command = ["omp", "-p", "--approval-mode=write", "--max-time", "{max_time}",
+           "--model={model}", "{prompt}"]
+version = ["omp", "--version"]
