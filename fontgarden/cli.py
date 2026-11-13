@@ -23,6 +23,7 @@ COMMANDS = {
     'evaluate-drafting': ('evaluate_drafting', [], 'Prepare, score and compare drafting evaluations'),
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
+    'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
     'diff': ('diff', [], 'Compare two builds with diffenator3'),
     'proof-web': ('proof_web', [], 'Serve the font beside reference-fonts/ in a browser'),
     'install-tools': ('install_tools', [], 'Install the pinned fontc and Fontspector binaries'),

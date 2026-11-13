@@ -78,6 +78,7 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
+| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
 | `fgtools proof-web [--current \| --snapshot DIR \| --directory DIR] [--port N] [--check]` | Serve the font beside `reference-fonts/` in a browser. See [Web proof](#web-proof). |
@@ -99,6 +100,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
 | `fontgarden.list_corrections` | `corrections` |
 | `fontgarden.build_source_snapshot` | `build` |
+| `fontgarden.qa`, `fontgarden.fontspector_plugin` | `qa` |
 | `fontgarden.diff` | `diff` |
 | `fontgarden.install_tools` | `install-tools` |
 | `fontgarden.proof_web` | `proof-web`. The web app is in `fontgarden/proof_web/app/`. |

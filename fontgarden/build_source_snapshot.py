@@ -51,8 +51,10 @@ def build_snapshot(config_path, output=None):
         shutil.copytree(source_root, target, ignore=shutil.ignore_patterns(*BUILD_FILES))
         for designspace in config['sources']:
             path = target / designspace
+            if path.suffix == '.ufo':
+                continue  # one master: no glyph orders to unify
             if path.suffix != '.designspace':
-                raise ValueError('The build needs designspace sources')
+                raise ValueError('The build needs designspace or UFO sources')
             masters = [(path.parent / s.get('filename')).resolve()
                        for s in ET.parse(path).findall('sources/source')]
             if not masters or any(not m.is_relative_to(target) for m in masters):

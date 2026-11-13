@@ -288,9 +288,8 @@ def prepare(task, run, root=None):
     sources = run / 'sources'
     for master in source.masters:
         shutil.copytree(source.ufo(master), source.ufo(master, run))
-    designspace = run / source.designspace.relative_to(source.root)
-    designspace.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(source.designspace, designspace.parent)
+    if source.designspace:
+        shutil.copy(source.designspace, run / source.designspace.relative_to(source.root))
     # config.yaml and design.toml make the copy a project for the fgtools
     # commands, and give the method the grid and the stroke targets.
     for name in ('config.yaml', 'design.toml'):

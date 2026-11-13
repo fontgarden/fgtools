@@ -5,7 +5,8 @@ builder configuration. The project root is the current directory or the
 nearest parent that contains that file.
 
 The masters are the <source> elements of the designspace that config.yaml
-names, in designspace order. The name of a master is the `stylename`
+names, in designspace order. A project with one master names its UFO in
+config.yaml, without a designspace. The name of a master is the `stylename`
 attribute of its source. Without that attribute, it is the part of the UFO
 file name after the last "-", without ".ufo".
 """
@@ -45,20 +46,25 @@ class Project:
         if not self.config_path.is_file():
             raise ProjectError(f'No {CONFIG} in {self.root}')
         self.config = yaml.safe_load(self.config_path.read_text()) or {}
-        designspaces = [entry for entry in self.config.get('sources') or []
-                        if str(entry).endswith('.designspace')]
-        if not designspaces:
-            raise ProjectError(f'{self.config_path}: `sources` names no designspace')
-        self.designspace = (self.sources / designspaces[0]).resolve()
+        entries = [str(entry) for entry in self.config.get('sources') or []]
+        designspaces = [entry for entry in entries if entry.endswith('.designspace')]
+        self.designspace = (self.sources / designspaces[0]).resolve() if designspaces else None
         self.ufos = {}
-        for source in ET.parse(self.designspace).getroot().findall('sources/source'):
-            path = (self.designspace.parent / source.get('filename')).resolve()
-            name = source.get('stylename') or path.stem.rsplit('-', 1)[-1]
+        if self.designspace:
+            found = [(source.get('stylename'), (self.designspace.parent / source.get('filename')).resolve())
+                     for source in ET.parse(self.designspace).getroot().findall('sources/source')]
+        else:
+            # A project with one master names its UFO in config.yaml.
+            found = [(None, (self.sources / entry).resolve())
+                     for entry in entries if entry.endswith('.ufo')]
+        for name, path in found:
+            name = name or path.stem.rsplit('-', 1)[-1]
             if name in self.ufos:
-                raise ProjectError(f'{self.designspace}: two masters are named {name}')
+                raise ProjectError(f'{self.config_path}: two masters are named {name}')
             self.ufos[name] = path
         if not self.ufos:
-            raise ProjectError(f'{self.designspace}: no <source> elements')
+            raise ProjectError(f'{self.config_path}: `sources` names no designspace or UFO '
+                               'with masters')
         self.masters = list(self.ufos)
         self.fonts = (self.sources / self.config.get('outputDir', '../fonts')).resolve()
         self.design_config = self.sources / 'design.toml'

@@ -41,8 +41,14 @@ class Layout(unittest.TestCase):
         with fixture.working_directory(self.root):
             self.assertEqual(project.layout(Path(self.temp.name)).root, self.root)
 
-    def test_a_config_without_a_designspace_is_an_error(self):
+    def test_a_config_that_names_one_ufo_has_one_master(self):
         (self.root / 'sources/config.yaml').write_text('sources: [Test-Regular.ufo]\n')
+        source = project.Project(self.root)
+        self.assertEqual(source.masters, ['Regular'])
+        self.assertIsNone(source.designspace)
+
+    def test_a_config_without_sources_is_an_error(self):
+        (self.root / 'sources/config.yaml').write_text('familyName: Test\n')
         with self.assertRaises(project.ProjectError):
             project.Project(self.root)
 
