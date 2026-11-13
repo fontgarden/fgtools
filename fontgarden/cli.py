@@ -1,5 +1,5 @@
-"""The `fontgarden` command. Each subcommand runs the main() of one module
-with the remaining arguments, so `fontgarden status --print` is the same as
+"""The `fgtools` command. Each subcommand runs the main() of one module
+with the remaining arguments, so `fgtools status --print` is the same as
 `python -m fontgarden.status --print`.
 
 The commands find the project from the current directory: the current
@@ -23,14 +23,16 @@ COMMANDS = {
     'evaluate-drafting': ('evaluate_drafting', [], 'Prepare, score and compare drafting evaluations'),
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
+    'diff': ('diff', [], 'Compare two builds with diffenator3'),
+    'install-tools': ('install_tools', [], 'Install the pinned fontc and Fontspector binaries'),
 }
 
 
 def usage():
     width = max(map(len, COMMANDS))
-    lines = ['usage: fontgarden <command> [arguments]', '', 'commands:']
+    lines = ['usage: fgtools <command> [arguments]', '', 'commands:']
     lines += [f'  {name:<{width}}  {text}' for name, (_, _, text) in COMMANDS.items()]
-    lines += ['', 'Run `fontgarden <command> --help` for the arguments of a command.']
+    lines += ['', 'Run `fgtools <command> --help` for the arguments of a command.']
     return '\n'.join(lines)
 
 
@@ -41,12 +43,12 @@ def main(argv=None):
         return 0 if argv else 2
     name, *rest = argv
     if name not in COMMANDS:
-        print(f'fontgarden: unknown command {name!r}\n\n{usage()}', file=sys.stderr)
+        print(f'fgtools: unknown command {name!r}\n\n{usage()}', file=sys.stderr)
         return 2
     module, before, _ = COMMANDS[name]
-    sys.argv = [f'fontgarden {name}', *before, *rest]
+    sys.argv = [f'fgtools {name}', *before, *rest]
     try:
         return importlib.import_module(f'fontgarden.{module}').main() or 0
     except ProjectError as error:
-        print(f'fontgarden: {error}', file=sys.stderr)
+        print(f'fgtools: {error}', file=sys.stderr)
         return 1

@@ -10,8 +10,8 @@
 3. INFLECTIONS: a curve segment whose curvature changes sign. This is
    correct in an S spine and a fault in a bowl.
 
-    fontgarden lint-curves Bold b d o
-    fontgarden lint-curves Regular --all
+    fgtools lint-curves Bold b d o
+    fgtools lint-curves Regular --all
 """
 import argparse, math, plistlib, re
 

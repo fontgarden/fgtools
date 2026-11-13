@@ -14,7 +14,7 @@ Checks, per master:
 Exit code 1 if anything is found.
 
 Usage:
-    fontgarden lint-glifs [glyph ...]
+    fgtools lint-glifs [glyph ...]
 """
 
 import plistlib

@@ -12,6 +12,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Eli Heuer" }]
 requires-python = ">=3.13"
 dependencies = [
+    "diffenator3",
     "fonttools",
     "numpy",
     "Pillow",
@@ -19,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fontgarden = "fontgarden.cli:main"
+fgtools = "fontgarden.cli:main"
 
 [tool.setuptools]
 packages = ["fontgarden"]

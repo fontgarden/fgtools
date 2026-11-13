@@ -5,10 +5,10 @@ Use this after an agent has edited glyphs, in particular after an unattended
 run. It compares the UFO sources in the working tree with a base revision
 and reads nothing else.
 
-    fontgarden check-changes                        compare with main
-    fontgarden check-changes --base HEAD~3          compare with another revision
-    fontgarden check-changes --glyphs "a e seen-ar" allow changes to these glyphs only
-    fontgarden check-changes --proof out/review     also draw SVG proof sheets of
+    fgtools check-changes                        compare with main
+    fgtools check-changes --base HEAD~3          compare with another revision
+    fgtools check-changes --glyphs "a e seen-ar" allow changes to these glyphs only
+    fgtools check-changes --proof out/review     also draw SVG proof sheets of
                                                     the changed glyphs, before
                                                     and after
 
@@ -17,13 +17,13 @@ It fails (exit status 1) when:
 - a glyph that is green at the base revision changed;
 - the contours of a glyph changed and it is not purple (a change of anchors,
   advance or components only does not need purple);
-- a changed composite is green but `fontgarden check-design --ready` does not
+- a changed composite is green but `fgtools check-design --ready` does not
   list it;
 - a glyph outside --glyphs changed;
 - a source file other than a glyph file changed, unless --allow-other;
 - a changed glyph has points off the 2-unit grid, or a different structure in
   the masters;
-- `fontgarden lint-glifs` finds a structural fault in a changed glyph, for example a
+- `fgtools lint-glifs` finds a structural fault in a changed glyph, for example a
   missing component base or a curve without two off-curve points.
 
 It also prints the other design check findings (stroke ranges, kinks) for each
@@ -161,7 +161,7 @@ def main():
                         [sys.executable, '-m', 'fontgarden.check_design', '--ready'],
                         cwd=root, capture_output=True, text=True).stdout.split())
                 if name not in ready:
-                    errors.append(f'{label}: marked green but fontgarden check-design --ready does not list it')
+                    errors.append(f'{label}: marked green but fgtools check-design --ready does not list it')
 
     names = sorted(set().union(*changed.values()))
     both = [n for n in names if all(n in current[m] for m in masters)]

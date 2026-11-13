@@ -6,13 +6,13 @@ sources/design.toml. Runebender measures the glyphs
 (`runebender agent call analyze_glyph`); this script holds the Font.Garden
 policy. It reads the sources and never writes them.
 
-    fontgarden check-design n a seen-ar  report on named glyphs, all masters
-    fontgarden check-design --not-green  report on every glyph that is not green
-    fontgarden check-design --green      run the checks on green glyphs (measures
+    fgtools check-design n a seen-ar  report on named glyphs, all masters
+    fgtools check-design --not-green  report on every glyph that is not green
+    fgtools check-design --green      run the checks on green glyphs (measures
                                          how often the checks flag approved work)
-    fontgarden check-design --observe    print stroke ranges of the green glyphs
-    fontgarden check-design --ready      list composites that pass and are not green
-    fontgarden check-design --queue      rank the glyphs that most composites wait on
+    fgtools check-design --observe    print stroke ranges of the green glyphs
+    fgtools check-design --ready      list composites that pass and are not green
+    fgtools check-design --queue      rank the glyphs that most composites wait on
 
 A contour glyph passes when its strokes are inside the target range, all
 points are on the 2-unit grid, the analyzer reports no kink, and all

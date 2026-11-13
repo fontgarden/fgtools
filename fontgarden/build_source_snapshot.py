@@ -7,10 +7,14 @@ in each master. The build copies the sources to a temporary folder, gives
 every master the glyph order of the first master, and builds from the copy.
 The sources themselves do not change.
 
-    fontgarden build    remove the fonts directory, build the fonts into it,
-                        and list them
+    fgtools build                 remove the fonts directory, build the fonts
+                                     into it with fontc, and list them
+    fgtools build --compiler fontmake
+                                     build with fontmake
 
-The fonts directory is `outputDir` in sources/config.yaml.
+The fonts directory is `outputDir` in sources/config.yaml. fontc is the
+compiler of Google Fonts that replaces fontmake; `fgtools install-tools`
+installs it. `fgtools diff --fontmake` compares the output of the two.
 """
 from __future__ import annotations
 
@@ -36,8 +40,9 @@ BUILD_FILES = ('archive', 'instance_ufos', 'build.ninja', '.ninja_log')
 
 
 @contextmanager
-def build_snapshot(config_path):
-    """Copy the sources and yield the path of the copied config.yaml."""
+def build_snapshot(config_path, output=None):
+    """Copy the sources and yield the path of the copied config.yaml. The fonts
+    go to `output`, or to the outputDir of config.yaml."""
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text())
     source_root = config_path.parent
@@ -69,29 +74,51 @@ def build_snapshot(config_path):
                 lib.write_text(text[:match.end(1)] + values + text[match.end(2):])
         # Change only the outputDir line, so that gftools reads the text of
         # the project's config.yaml and rejects what it would reject there.
-        output = (source_root / config.get('outputDir', '../fonts')).resolve()
+        output = Path(output or source_root / config.get('outputDir', '../fonts')).resolve()
         text = re.sub(r'^outputDir:.*\n?', '', config_path.read_text(), flags=re.M)
         copied = target / config_path.name
         copied.write_text(f'{text.rstrip()}\noutputDir: {output}\n')
         yield copied
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    parser.parse_args()
-    source = project.load()
-    # gftools and fontmake are installed next to this Python, which need not
-    # be on PATH.
-    path = os.pathsep.join([str(Path(sys.executable).parent), os.environ.get('PATH', '')])
+def tool_path():
+    """PATH with the directory of this Python first: gftools, fontmake and the
+    installed fontc are there, and it need not be on PATH."""
+    return os.pathsep.join([str(Path(sys.executable).parent), os.environ.get('PATH', '')])
+
+
+def build_fonts(config_path, output, compiler='fontc', quiet=False):
+    """Build the fonts of a project into `output` and return their paths.
+    With `quiet`, the gftools log is printed only when the build fails."""
+    path = tool_path()
+    command = ['gftools', 'builder']
+    if compiler == 'fontc':
+        fontc = shutil.which('fontc', path=path)
+        if fontc is None:
+            sys.exit('fontc is not installed. Run `fgtools install-tools`.')
+        command += ['--experimental-fontc', fontc]
     if shutil.which('gftools', path=path) is None:
         sys.exit('gftools is not installed. Install the requirements of the project.')
-    shutil.rmtree(source.fonts, ignore_errors=True)
-    with build_snapshot(source.config_path) as config:
-        subprocess.run(['gftools', 'builder', str(config)], check=True,
-                       env=dict(os.environ, PATH=path))
-    fonts = sorted(source.fonts.rglob('*.ttf'))
+    shutil.rmtree(output, ignore_errors=True)
+    with build_snapshot(config_path, output) as config:
+        result = subprocess.run([*command, str(config)], env=dict(os.environ, PATH=path),
+                                capture_output=quiet, text=True)
+        if result.returncode:
+            if quiet:
+                print(result.stdout + result.stderr, file=sys.stderr)
+            sys.exit(f'gftools builder failed with {compiler}.')
+    fonts = sorted(Path(output).rglob('*.ttf'))
     if not fonts:
         sys.exit('gftools builder produced no TTF files.')
+    return fonts
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    parser.add_argument('--compiler', choices=['fontc', 'fontmake'], default='fontc')
+    args = parser.parse_args()
+    source = project.load()
+    fonts = build_fonts(source.config_path, source.fonts, args.compiler)
     print('\n'.join(str(font.relative_to(source.root)) for font in fonts))
 
 

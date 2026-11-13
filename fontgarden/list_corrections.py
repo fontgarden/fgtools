@@ -16,8 +16,8 @@ purple; the column "against" gives the mark of that version:
     accepted   the same contours and advance as the draft
     corrected  other contours or another advance
 
-    fontgarden corrections          the open corrections, then a summary by month
-    fontgarden corrections --all    every review, then the summary
+    fgtools corrections          the open corrections, then a summary by month
+    fgtools corrections --all    every review, then the summary
 
 A correction is open until a tracked file or a later commit message cites the
 first 7 or more characters of its review commit: a rule entry ("Seen in"), a

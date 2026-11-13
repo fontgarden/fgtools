@@ -4,11 +4,11 @@
 A drafting method is anything that draws glyphs: an agent, a model or a
 script. The held-out glyphs and the tasks are in sources/held-out-glyphs.toml.
 
-    fontgarden evaluate-drafting prepare <task> <run>  copy the sources into
+    fgtools evaluate-drafting prepare <task> <run>  copy the sources into
                                                        <run>/sources and set
                                                        the task
-    fontgarden evaluate-drafting score <run>           score the drafts in that copy
-    fontgarden evaluate-drafting compare <run> <run>   compare the scores of two runs
+    fgtools evaluate-drafting score <run>           score the drafts in that copy
+    fgtools evaluate-drafting compare <run> <run>   compare the scores of two runs
 
 The tasks are redraw, bold, repair and relatives. The bold task hides every
 master after the first (the default master) and scores the drafts of those
@@ -22,8 +22,8 @@ place. `score` reports for each glyph and master:
                 structure is the same
     compatible  the point structure matches the other masters
     off 8       points off the 8-unit grid (new drafts use 8)
-    curves      flags from `fontgarden lint-curves`
-    design      findings from `fontgarden check-design`; needs Runebender
+    curves      flags from `fgtools lint-curves`
+    design      findings from `fgtools check-design`; needs Runebender
 
 The last three columns show the draft, then Eli's drawing: "4/3". Eli's
 drawings have intended off-grid points and findings, so compare the two.
