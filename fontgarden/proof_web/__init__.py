@@ -2,7 +2,7 @@
 reference-fonts/ folder, at one em size and weight, in a browser on localhost.
 
     fgtools proof-web [--current | --snapshot DIR | --directory DIR] [--port N] [--check]
-    fgtools proof-web prepare --evidence FILE --output-dir DIR
+    fgtools proof-web prepare --comparison FILE --output-dir DIR
     fgtools proof-web render-detail --text TEXT --weight N --output FILE
 
 The modules: serve (the server and the modes), prepare (snapshots and the

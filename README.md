@@ -79,7 +79,7 @@ be the top level of its Git repository.
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
 | `fgtools proof-web [--current \| --snapshot DIR \| --directory DIR] [--port N] [--check]` | Serve the font beside `reference-fonts/` in a browser. See [Web proof](#web-proof). |
-| `fgtools proof-web prepare --evidence FILE --output-dir DIR` | Prepare a Before and Candidate snapshot from fixed font files. |
+| `fgtools proof-web prepare --comparison FILE --output-dir DIR` | Prepare a Before and Candidate snapshot from fixed font files. |
 | `fgtools proof-web render-detail --text TEXT --weight N --output FILE` | A DesignBot PNG of one sample in each font of the proof. Needs the `designbot` command. |
 
 `fgtools COMMAND --help` lists the arguments of a command. Each command
@@ -119,7 +119,7 @@ SHA-256 hash of each font before it shows it. A reference font without a
 glyph shows the missing code points, not a fallback font. Browser rendering
 is not release QA.
 
-For a Before and Candidate comparison, write an evidence manifest with the
+For a Before and Candidate comparison, write a comparison file with the
 paths and hashes of fixed font files, run `proof-web prepare`, then
 `proof-web --snapshot DIR`. The command remembers the snapshot, and
 `proof-web` without a mode serves it again. If a Before or Candidate font is

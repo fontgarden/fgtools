@@ -149,18 +149,18 @@ class CurrentBuild(unittest.TestCase):
             self.assertEqual(serve.selected_snapshot(root), root / 'out/study/snapshot')
             self.assertEqual(serve.selected_snapshot(root, Path('/explicit')), Path('/explicit').resolve())
 
-    def test_prepare_checks_the_hashes_of_the_evidence(self):
+    def test_prepare_checks_the_hashes_of_the_comparison(self):
         with font_project() as root:
-            evidence = root / 'out/evidence.json'
+            comparison = root / 'out/comparison.json'
             path = root / 'fonts/variable/TestSans[wght].ttf'
             record = {'family': 'Test Sans', 'path': str(path), 'sha256': '0' * 64}
-            evidence.parent.mkdir()
-            evidence.write_text(json.dumps({'fonts': {'after': record}}))
+            comparison.parent.mkdir()
+            comparison.write_text(json.dumps({'fonts': {'after': record}}))
             with self.assertRaisesRegex(ValueError, 'differs from the hash'):
-                prepare.prepare(evidence, root / 'out/snapshot')
+                prepare.prepare(comparison, root / 'out/snapshot')
             record['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
-            evidence.write_text(json.dumps({'fonts': {'before': record, 'after': {**record, 'label': 'New'}}}))
-            data = reference_fonts.read_review_data(prepare.prepare(evidence, root / 'out/snapshot'))
+            comparison.write_text(json.dumps({'fonts': {'before': record, 'after': {**record, 'label': 'New'}}}))
+            data = reference_fonts.read_review_data(prepare.prepare(comparison, root / 'out/snapshot'))
             self.assertEqual((data['fonts']['before']['label'], data['fonts']['after']['label']), ('Before', 'New'))
 
 

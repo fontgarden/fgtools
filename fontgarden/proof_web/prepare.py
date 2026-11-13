@@ -1,8 +1,8 @@
-"""Prepare a snapshot of the web proof from an evidence manifest.
+"""Prepare a snapshot of the web proof from a comparison file.
 
-    fgtools proof-web prepare --evidence FILE --output-dir DIR
+    fgtools proof-web prepare --comparison FILE --output-dir DIR
 
-The evidence manifest is a JSON file:
+The comparison file is a JSON file:
 
     {"study": {"id": ..., "status": ..., "note": ..., "language": ...,
                "readingDefault": ..., "glyphs": [...], "presets": {...}},
@@ -66,23 +66,23 @@ def install_app(target, data):
     (target / 'index.html').write_text(page)
 
 
-def prepare(evidence_path, output, frozen_references=False, source=None):
+def prepare(comparison_path, output, frozen_references=False, source=None):
     """Prepare a snapshot in `output` and return its path."""
     source = source or project.load()
-    evidence_path = Path(evidence_path).resolve()
-    evidence = json.loads(evidence_path.read_text())
+    comparison_path = Path(comparison_path).resolve()
+    comparison = json.loads(comparison_path.read_text())
     target = Path(output).resolve()
     (target / 'fonts').mkdir(parents=True, exist_ok=True)
     records = {}
-    for role, record in evidence['fonts'].items():
+    for role, record in comparison['fonts'].items():
         if role not in ROLES and not frozen_references:
             continue
         faces, coverage = [], None
         for item in record.get('faces', [record]):
-            path = evidence_path.parent / item['path']
+            path = comparison_path.parent / item['path']
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
             if digest != item['sha256']:
-                raise ValueError(f'{role}: {path} differs from the hash in the evidence')
+                raise ValueError(f'{role}: {path} differs from the hash in the comparison')
             name = f'{role}-{digest[:12]}.ttf'
             if path.resolve() != (target / 'fonts' / name).resolve():
                 shutil.copy2(path, target / 'fonts' / name)
@@ -100,15 +100,15 @@ def prepare(evidence_path, output, frozen_references=False, source=None):
         else:
             records[role].update(faces[0])
     if 'after' not in records:
-        raise ValueError('The evidence has no `after` font')
+        raise ValueError('The comparison has no `after` font')
     if not frozen_references:
         references = collect(source.root / FOLDER, target)
         if references['errors']:
             raise ValueError('Reference fonts: ' + '; '.join(references['errors']))
         records.update(references['fonts'])
     chosen = samples.select(records['after']['codepoints'], source.sources)
-    install_app(target, dict(study=evidence.get('study'), fonts=records, samples=chosen['samples'],
-                             reading={**chosen['reading'], **evidence.get('reading', {})}))
+    install_app(target, dict(study=comparison.get('study'), fonts=records, samples=chosen['samples'],
+                             reading={**chosen['reading'], **comparison.get('reading', {})}))
     (target / 'live-fonts.json').write_text(json.dumps(records, indent=2, ensure_ascii=False) + '\n')
     return target
 
@@ -153,12 +153,12 @@ def prepare_live(snapshot, target, source=None):
 def main(argv=None, prog=None):
     parser = argparse.ArgumentParser(prog=prog, description=__doc__.split('\n')[0],
                                      epilog='The format of the manifest is in the docstring of fontgarden.proof_web.prepare.')
-    parser.add_argument('--evidence', type=Path, required=True, help='the evidence manifest (JSON)')
+    parser.add_argument('--comparison', type=Path, required=True, help='the comparison file (JSON)')
     parser.add_argument('--output-dir', type=Path, required=True, help='the snapshot folder to write')
     parser.add_argument('--frozen-references', action='store_true',
-                        help='use the reference fonts of the evidence, not those of reference-fonts/')
+                        help='use the reference fonts of the comparison, not those of reference-fonts/')
     args = parser.parse_args(argv)
     try:
-        print(prepare(args.evidence, args.output_dir, args.frozen_references))
+        print(prepare(args.comparison, args.output_dir, args.frozen_references))
     except (OSError, ValueError, KeyError) as error:
         parser.exit(1, f'{parser.prog}: {error}\n')

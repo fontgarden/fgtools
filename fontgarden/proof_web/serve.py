@@ -61,13 +61,13 @@ def prepare_current(source):
     target = source.root / OUTPUT / 'current'
     target.mkdir(parents=True, exist_ok=True)
     family = source.config.get('familyName') or font.stem.split('[')[0].split('-')[0]
-    evidence = target / 'evidence.json'
-    evidence.write_text(json.dumps({
+    comparison = target / 'comparison.json'
+    comparison.write_text(json.dumps({
         'study': {'id': 'Current build', 'status': 'Current build', 'note': note},
         'fonts': {'after': {'family': family, 'label': 'Current', 'path': str(font),
                             'sha256': hashlib.sha256(font.read_bytes()).hexdigest()}},
     }, indent=2, ensure_ascii=False) + '\n')
-    return prepare(evidence, target / 'snapshot', source=source)
+    return prepare(comparison, target / 'snapshot', source=source)
 
 
 def selected_snapshot(root, requested=None):
