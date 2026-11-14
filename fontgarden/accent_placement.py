@@ -2,7 +2,7 @@
 """Measure where accent marks sit on their base letters.
 
     fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]
-    fgtools evaluate-accent-placement FONT.ttf ... [--letters]
+    fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]
 
 An accented letter is a composite: a base letter and one or more marks, for
 example Aacute = A + acute. Unicode gives the parts. The position of a mark
@@ -443,7 +443,9 @@ def main_check():
 def main_evaluate():
     parser = argparse.ArgumentParser(prog='fgtools evaluate-accent-placement',
                                      description=evaluate.__doc__)
-    parser.add_argument('fonts', nargs='+', help='compiled TTF fonts')
+    parser.add_argument('fonts', nargs='*',
+                        help='compiled TTF fonts (default: the shared reference fonts)')
     parser.add_argument('--letters', action='store_true', help='also list the error for each base letter')
     args = parser.parse_args()
-    return evaluate(args.fonts, args.letters)
+    from fontgarden import reference_fonts
+    return evaluate(args.fonts or reference_fonts.one_for_each_family(), args.letters)

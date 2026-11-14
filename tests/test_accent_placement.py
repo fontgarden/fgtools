@@ -151,5 +151,20 @@ class AccentPlacement(unittest.TestCase):
         self.assertEqual(accent_placement.outline_position(font, row), (80, 200))
 
 
+class ReferenceFonts(unittest.TestCase):
+    def test_one_upright_font_is_chosen_for_each_family(self):
+        from fontgarden import reference_fonts
+        with tempfile.TemporaryDirectory() as temp:
+            for name in ('inter/Inter[wght].ttf', 'inter/Inter-Italic[wght].ttf',
+                         'poppins/Poppins-Bold.ttf', 'poppins/Poppins-Regular.ttf',
+                         'poppins/Poppins-Italic.ttf'):
+                path = Path(temp) / name
+                path.parent.mkdir(exist_ok=True)
+                path.write_bytes(b'')
+            chosen = [path.name for path in reference_fonts.one_for_each_family(temp)]
+            self.assertEqual(chosen, ['Inter[wght].ttf', 'Poppins-Regular.ttf'])
+            self.assertEqual(len(reference_fonts.fonts(temp, italic=True)), 5)
+
+
 if __name__ == '__main__':
     unittest.main()

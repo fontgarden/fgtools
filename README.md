@@ -77,7 +77,8 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
 | `fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]` | List the accented letters whose mark is not where the other accented letters predict, or not where the anchors of its parts are. See [Accent placement](#accent-placement). |
-| `fgtools evaluate-accent-placement FONT.ttf ... [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. |
+| `fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. Without fonts, it uses one upright font of each family of the [reference fonts](#reference-fonts). |
+| `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
@@ -102,6 +103,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.evaluate_drafting` | `evaluate-drafting` |
 | `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
 | `fontgarden.accent_placement` | `check-accents`, `evaluate-accent-placement` |
+| `fontgarden.reference_fonts` | `fetch-reference-fonts` |
 | `fontgarden.list_corrections` | `corrections` |
 | `fontgarden.build_source_snapshot` | `build` |
 | `fontgarden.qa`, `fontgarden.fontspector_plugin` | `qa` |
@@ -139,6 +141,20 @@ left out, because it is drawn as an apostrophe beside the letter.
 the `calibrated` method where the first has no prediction. It does not
 change the sources. A listed letter is a reason to look: a mark on the stem
 of L is correct and is not where the centered marks predict.
+
+## Reference fonts
+
+One shared collection of OFL fonts serves every comparison and measurement:
+the accent placement evaluation, proofs and checks. It is not a source of
+outlines. Set `FONTGARDEN_REFERENCE_FONTS` to its directory, then run
+`fgtools fetch-reference-fonts`. The command downloads 34 text families from
+https://github.com/google/fonts, each into `<directory>/<family>/` with its
+`OFL.txt`. A family with variable fonts gets those. Another family gets its
+Regular, Italic, Bold and Bold Italic. A family that is present is not
+downloaded again, and `--family NAME` adds a family of `google/fonts/ofl`.
+
+The `reference-fonts/` folder of a project is separate. It holds the few
+fonts that `proof-web` shows beside that font.
 
 ## Web proof
 
