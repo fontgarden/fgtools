@@ -122,15 +122,16 @@ predicts the offset of the mark with three methods:
 
 | Method | Uses | Top marks within 0.8% of the em |
 | --- | --- | ---: |
-| `outlines` | The outlines only: the mark is centered on the top of the base and keeps its drawn height over the x-height or the cap height. | 36% |
-| `calibrated` | The outlines, with the constant of each mark from the other letters that use it. | 70% |
-| `anchors` | The base anchor and the mark anchor that the other accented letters imply, fitted with medians. | 98% |
+| `outlines` | The outlines only: the mark is centered on the top of the base and keeps its drawn height over the x-height or the cap height. | 33% |
+| `calibrated` | The outlines, with the constant of each mark from the other letters that use it. | 67% |
+| `anchors` | The base anchor and the mark anchor that the other accented letters imply, fitted with medians. | 99% |
 
 The numbers are from `evaluate-accent-placement` on one upright font of each
-of 34 OFL families of Google Fonts, 6900 marks, on 2026-11-14. Each letter
+of the 9 families of the [reference fonts](#reference-fonts), 2162 marks, on
+2026-11-14. Each letter
 is predicted without itself. The `anchors` method needs another mark on the
 same base and another base with the same mark; it predicts 86% of the marks.
-Bottom marks (cedilla, ogonek, comma accent) are within 0.8% for 67% of the
+Bottom marks (cedilla, ogonek, comma accent) are within 0.8% for 72% of the
 marks with the `anchors` method, because an ogonek joins a stroke and is not
 centered.
 
@@ -147,8 +148,10 @@ of L is correct and is not where the centered marks predict.
 One shared collection of OFL fonts serves every comparison and measurement:
 the accent placement evaluation, proofs and checks. It is not a source of
 outlines. Set `FONTGARDEN_REFERENCE_FONTS` to its directory, then run
-`fgtools fetch-reference-fonts`. The command downloads 34 text families from
-https://github.com/google/fonts, each into `<directory>/<family>/` with its
+`fgtools fetch-reference-fonts`. The command downloads the families of
+`fontgarden/reference_fonts.toml` from https://github.com/google/fonts. That
+file is the trusted list: each family has the reason that it is a reference,
+and the designer decides which families it holds. Each family goes into `<directory>/<family>/` with its
 `OFL.txt`. A family with variable fonts gets those. Another family gets its
 Regular, Italic, Bold and Bold Italic. A family that is present is not
 downloaded again, and `--family NAME` adds a family of `google/fonts/ofl`.
