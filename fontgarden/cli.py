@@ -13,6 +13,7 @@ import sys
 from fontgarden.project import ProjectError
 
 # Subcommand: (module, arguments put before the user's arguments, description).
+# A module name with a colon names the function to run in place of main().
 COMMANDS = {
     'status': ('status', [], 'Write STATUS.md from the mark colors of the masters'),
     'queue': ('check_design', ['--queue'], 'Rank the glyphs that most composites wait on'),
@@ -21,6 +22,10 @@ COMMANDS = {
     'lint-glifs': ('glif_lint', [], 'Find structural faults in the GLIF files'),
     'lint-curves': ('curve_lint', [], 'Curve fairness checks of one master'),
     'evaluate-drafting': ('evaluate_drafting', [], 'Prepare, score and compare drafting evaluations'),
+    'check-accents': ('accent_placement:main_check', [],
+                      'List the accented letters whose marks are not where the others predict'),
+    'evaluate-accent-placement': ('accent_placement:main_evaluate', [],
+                                  'Test the accent placement rules on compiled fonts'),
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
     'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
@@ -51,7 +56,8 @@ def main(argv=None):
     module, before, _ = COMMANDS[name]
     sys.argv = [f'fgtools {name}', *before, *rest]
     try:
-        return importlib.import_module(f'fontgarden.{module}').main() or 0
+        module, _, function = module.partition(':')
+        return getattr(importlib.import_module(f'fontgarden.{module}'), function or 'main')() or 0
     except ProjectError as error:
         print(f'fgtools: {error}', file=sys.stderr)
         return 1

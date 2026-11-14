@@ -76,6 +76,8 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting compare RUN RUN` | Compare the scores of two runs. |
 | `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
+| `fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]` | List the accented letters whose mark is not where the other accented letters predict, or not where the anchors of its parts are. See [Accent placement](#accent-placement). |
+| `fgtools evaluate-accent-placement FONT.ttf ... [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
@@ -99,6 +101,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.curve_lint` | `lint-curves` |
 | `fontgarden.evaluate_drafting` | `evaluate-drafting` |
 | `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
+| `fontgarden.accent_placement` | `check-accents`, `evaluate-accent-placement` |
 | `fontgarden.list_corrections` | `corrections` |
 | `fontgarden.build_source_snapshot` | `build` |
 | `fontgarden.qa`, `fontgarden.fontspector_plugin` | `qa` |
@@ -108,6 +111,34 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.proof_web` | `proof-web`. The web app is in `fontgarden/proof_web/app/`. |
 | `fontgarden.source_inventory` | None. Other modules import it to read glyph records. |
 | `fontgarden.project` | None. It finds the project and reads its layout. |
+
+## Accent placement
+
+An accented letter is a composite of a base letter and a mark, for example
+`Aacute` = `A` + `acute`. Unicode decomposition gives the parts. The module
+predicts the offset of the mark with three methods:
+
+| Method | Uses | Top marks within 0.8% of the em |
+| --- | --- | ---: |
+| `outlines` | The outlines only: the mark is centered on the top of the base and keeps its drawn height over the x-height or the cap height. | 36% |
+| `calibrated` | The outlines, with the constant of each mark from the other letters that use it. | 70% |
+| `anchors` | The base anchor and the mark anchor that the other accented letters imply, fitted with medians. | 98% |
+
+The numbers are from `evaluate-accent-placement` on one upright font of each
+of 34 OFL families of Google Fonts, 6900 marks, on 2026-11-14. Each letter
+is predicted without itself. The `anchors` method needs another mark on the
+same base and another base with the same mark; it predicts 86% of the marks.
+Bottom marks (cedilla, ogonek, comma accent) are within 0.8% for 67% of the
+marks with the `anchors` method, because an ogonek joins a stroke and is not
+centered.
+
+The rules are for Latin letters with one mark. A caron on d, t, l and L is
+left out, because it is drawn as an apostrophe beside the letter.
+
+`check-accents` uses the `anchors` method on the masters of the project, with
+the `calibrated` method where the first has no prediction. It does not
+change the sources. A listed letter is a reason to look: a mark on the stem
+of L is correct and is not where the centered marks predict.
 
 ## Web proof
 
