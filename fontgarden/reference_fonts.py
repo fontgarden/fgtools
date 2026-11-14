@@ -5,6 +5,7 @@
 
 The collection is for comparison and measurement: the accent placement
 evaluation, proofs and checks. It is not a source of outlines. Each family
+of fontgarden/reference_fonts.toml, the trusted list,
 goes to DIRECTORY/<family>/ with its OFL.txt, under the file names of
 https://github.com/google/fonts. A family with variable fonts gets those;
 another family gets its Regular, Italic, Bold and Bold Italic.
@@ -20,17 +21,19 @@ import json
 import os
 import re
 import sys
+import tomllib
 import urllib.request
 from pathlib import Path
 
 VARIABLE = 'FONTGARDEN_REFERENCE_FONTS'
 API = 'https://api.github.com/repos/google/fonts/contents/ofl/'
-# Directory names in google/fonts/ofl: sans and serif text families with wide Latin coverage.
-FAMILIES = '''archivo bitter crimsonpro dmsans ebgaramond epilogue figtree firasans ibmplexsans
-inter karla lato lexend librefranklin lora manrope merriweather montserrat mulish notosans
-nunito opensans outfit playfairdisplay plusjakartasans poppins publicsans raleway roboto sora
-sourcesans3 sourceserif4 spacegrotesk worksans'''.split()
+LIST = Path(__file__).with_name('reference_fonts.toml')
 STATIC = re.compile(r'-(Regular|Italic|Bold|BoldItalic)\.ttf$')
+
+
+def families():
+    """The trusted families: directory name in google/fonts/ofl to the reason."""
+    return tomllib.loads(LIST.read_text())['families']
 
 
 def directory(value=None):
@@ -87,10 +90,10 @@ def main():
                                      description=__doc__.split('\n')[0])
     parser.add_argument('directory', nargs='?', help=f'default: ${VARIABLE}')
     parser.add_argument('--family', action='append',
-                        help='a directory name in google/fonts/ofl (default: the standard list)')
+                        help='a directory name in google/fonts/ofl (default: the families of reference_fonts.toml)')
     args = parser.parse_args()
     target, status = directory(args.directory), 0
-    for family in args.family or FAMILIES:
+    for family in args.family or families():
         try:
             count = fetch(target, family)
             print(f'{family}: {count} fonts' if count else f'{family}: present')

@@ -1,0 +1,23 @@
+# The shared reference fonts of Font.Garden.
+#
+# `fgtools fetch-reference-fonts` downloads these families from
+# https://github.com/google/fonts/tree/main/ofl. A key is a directory name
+# there. The value is the reason that the family is trusted as a reference.
+#
+# The reason here is the origin of the family: a professional foundry or a
+# project with long maintenance. It is not a measured quality. The designer
+# decides which families are in this list. Add a family only with a reason.
+#
+# A family for the accent placement evaluation must keep its accented
+# letters as components. Archivo and Manrope do not.
+
+[families]
+sourcesans3 = "Adobe Originals, Paul D. Hunt. Maintained by Adobe since 2012."
+sourceserif4 = "Adobe Originals, Frank Grießhammer. Optical sizes."
+ibmplexsans = "IBM and Bold Monday. A corporate family with wide language support."
+inter = "Rasmus Andersson. Maintained since 2017, made for screen text."
+roboto = "Google, Christian Robertson. The Android system family."
+notosans = "Google and Monotype. The reference for language coverage."
+firasans = "Carrois and Erik Spiekermann, for Mozilla."
+worksans = "Wei Huang. A grotesque that is maintained in the open."
+ebgaramond = "Georg Duffner and Octavio Pardo. A revival of Garamond with careful sources."

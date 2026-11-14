@@ -165,6 +165,14 @@ class ReferenceFonts(unittest.TestCase):
             self.assertEqual(chosen, ['Inter[wght].ttf', 'Poppins-Regular.ttf'])
             self.assertEqual(len(reference_fonts.fonts(temp, italic=True)), 5)
 
+    def test_each_trusted_family_has_a_reason(self):
+        from fontgarden import reference_fonts
+        families = reference_fonts.families()
+        self.assertTrue(families)
+        for family, reason in families.items():
+            self.assertRegex(family, r'^[a-z0-9]+$')
+            self.assertGreater(len(reason), 20, family)
+
 
 if __name__ == '__main__':
     unittest.main()

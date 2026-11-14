@@ -27,5 +27,5 @@ fgtools = "fontgarden.cli:main"
 packages = ["fontgarden", "fontgarden.proof_web"]
 
 [tool.setuptools.package-data]
-"fontgarden" = ["harnesses.toml"]
+"fontgarden" = ["harnesses.toml", "reference_fonts.toml"]
 "fontgarden.proof_web" = ["samples.toml", "render_detail.rs", "app/*"]
