@@ -167,6 +167,15 @@ text = "..."                    # or `runs`, for mixed directions:
 The proof also adds the sample "Encoded repertoire": every printable
 character in the cmap of the font, by script.
 
+## Guide
+
+The guide of the Font.Garden system is at https://font.garden/docs. Its
+source is https://github.com/fontgarden/fontgarden.github.io
+(`src/content/docs/`). When you change a command, a `make` target, a mark
+color, the layout or a workflow in this package, update the chapter of the guide in the
+same session. The README of that repository lists the chapter for each kind
+of change, and its `scripts/check_guide.py` finds the differences.
+
 ## Tests
 
 ```sh
