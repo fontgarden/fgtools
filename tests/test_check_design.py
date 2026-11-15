@@ -36,5 +36,13 @@ class CheckDesign(unittest.TestCase):
         self.assertEqual([level(value, 8, 2) for value in (96, 98, 99, -16, -6)], [0, 1, 2, 0, 1])
 
 
+    def test_a_combining_mark_has_no_stroke_target(self):
+        from fontgarden.check_design import script_of
+        self.assertEqual(script_of('dagesh-hb', {'unicodes': [0x05BC]}), 'Symbol')
+        self.assertEqual(script_of('fatha-ar', {'unicodes': [0x064E]}), 'Symbol')
+        self.assertEqual(script_of('he-hb', {'unicodes': [0x05D4]}), 'Hebrew')
+        self.assertEqual(script_of('acutecomb', {'unicodes': [0x0301]}), 'Symbol')
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -55,12 +55,15 @@ def runebender():
 
 
 def script_of(name, record=None):
-    """The target class of a glyph. Symbols and icons have no stroke target."""
+    """The target class of a glyph. Symbols, icons and combining marks have no
+    stroke target: a vowel dot or a dagesh is not a stem."""
+    codes = record['unicodes'] if record else []
+    if codes and all(unicodedata.category(chr(c)).startswith('M') for c in codes):
+        return 'Symbol'
     if '-ar' in name:
         return 'Arabic'
     if '-hb' in name:
         return 'Hebrew'
-    codes = record['unicodes'] if record else []
     if any(unicodedata.category(chr(c))[0] in 'LN' and c < 0xE000 for c in codes):
         return 'Latin'
     return 'Symbol'
