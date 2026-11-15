@@ -150,5 +150,32 @@ class AccentProofs(unittest.TestCase):
         self.assertEqual(cover[10, 10], 0)      # outside
 
 
+
+class ProjectReferenceFonts(unittest.TestCase):
+    def test_a_project_gets_its_families_from_a_local_clone(self):
+        import os
+        import sys
+        from unittest import mock
+        from fontgarden import reference_fonts
+        with tempfile.TemporaryDirectory() as temp:
+            root = write_ufo(Path(temp) / 'font')
+            (root / 'sources/design.toml').write_text(
+                '[reference_fonts.families]\nheebo = "A Hebrew sans."\n')
+            family = Path(temp) / 'clone/ofl/heebo'
+            family.mkdir(parents=True)
+            for name in ('Heebo[wght].ttf', 'OFL.txt', 'METADATA.pb'):
+                (family / name).write_text(name)
+            project._load.cache_clear()
+            environment = {reference_fonts.CLONE: str(Path(temp) / 'clone')}
+            with mock.patch.dict(os.environ, environment), mock.patch.object(sys, 'argv', ['x', '--project']), \
+                    mock.patch.object(Path, 'cwd', return_value=root):
+                os.environ.pop(reference_fonts.VARIABLE, None)
+                status, text = quiet(reference_fonts.main)
+            self.assertEqual(status, 0, text)
+            self.assertIn('heebo: 1 fonts from the local clone', text)
+            self.assertEqual(sorted(path.name for path in (root / 'reference-fonts/heebo').iterdir()),
+                             ['Heebo[wght].ttf', 'OFL.txt'])
+
+
 if __name__ == '__main__':
     unittest.main()

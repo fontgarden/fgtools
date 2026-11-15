@@ -82,7 +82,7 @@ be the top level of its Git repository.
 | `fgtools build-accented-letters [--set NAME] [--characters TEXT] [--glyphs "NAMES"] [--replace-drafts] [--write]` | Add the accented letters of a set as purple composites, in every master. |
 | `fgtools render-accent-proofs [--master NAME] [--glyphs "NAMES"] [--references DIR] [--out DIR]` | Draw each accented letter beside the reference fonts, and measure it against them. |
 | `fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. Without fonts, it uses one upright font of each family of the [reference fonts](#reference-fonts). |
-| `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. |
+| `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. With `--project`, get the families that `sources/design.toml` lists into `reference-fonts/` of the project. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
@@ -210,8 +210,26 @@ and the designer decides which families it holds. Each family goes into `<direct
 Regular, Italic, Bold and Bold Italic. A family that is present is not
 downloaded again, and `--family NAME` adds a family of `google/fonts/ofl`.
 
-The `reference-fonts/` folder of a project is separate. It holds the few
-fonts that `proof-web` shows beside that font.
+### Reference fonts of a project
+
+Each project names its own reference families in `sources/design.toml`:
+
+```toml
+[reference_fonts.families]
+heebo = "A Hebrew extension of Roboto: a plain sans for text."
+```
+
+A key is a directory name of https://github.com/google/fonts under `ofl/`,
+so the upstream of a family is
+`https://github.com/google/fonts/tree/main/ofl/<name>`. The value is the
+reason that the family is a reference. `fgtools fetch-reference-fonts
+--project` (`make reference-fonts`) copies the upright fonts and the
+`OFL.txt` of each family into `reference-fonts/<name>/` of the project. Git
+ignores that folder. `proof-web` and Runebender read it. A family comes from
+the first place that has it: the shared collection, a local clone of
+google/fonts that `FONTGARDEN_GOOGLE_FONTS` names, or a download from GitHub.
+The command lists the folders that `design.toml` does not name, and does not
+remove them.
 
 ## Web proof
 
