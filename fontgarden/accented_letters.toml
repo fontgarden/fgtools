@@ -1,0 +1,13 @@
+# The sets of accented letters that `fgtools build-accented-letters` builds.
+#
+# A set is a string of characters. Each character is a Latin letter with a
+# mark, and Unicode gives its parts (the canonical decomposition).
+# Add a set here, or give the characters with --characters.
+
+[sets]
+# The accented letters of the Google Fonts Latin Core glyph set, from
+# GF_Latin_Core.nam of glyphsets 1.1.0 (https://github.com/googlefonts/glyphsets).
+google-fonts-latin-core = """\
+ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüýÿ\
+ĀāĂăĄąĆćĊċČčĎďĒēĖėĘęĚěĞğĠġĢģĪīĮįİĶķĹĺĻļĽľŃńŅņŇňŐőŔŕŘřŚśŞşŠšŤť\
+ŪūŮůŰűŲųŴŵŶŷŸŹźŻżŽžȘșȚțẀẁẂẃẄẅỲỳ"""

@@ -63,13 +63,16 @@ class Flatten(BasePen):
     def __init__(self, glyph_set):
         super().__init__(glyph_set)
         self.segments = []
+        self.contours = []                    # the points of each contour, for drawing
         self.start = self.point = None
 
     def _moveTo(self, point):
         self.start = self.point = point
+        self.contours.append([point])
 
     def _lineTo(self, point):
         self.segments.append((self.point, point))
+        self.contours[-1].append(point)
         self.point = point
 
     def _curveToOne(self, one, two, three):
@@ -80,6 +83,7 @@ class Flatten(BasePen):
             point = (a * zero[0] + b * one[0] + c * two[0] + d * three[0],
                      a * zero[1] + b * one[1] + c * two[1] + d * three[1])
             self.segments.append((previous, point))
+            self.contours[-1].append(point)
             previous = point
         self.point = three
 
@@ -92,9 +96,10 @@ class Flatten(BasePen):
 class Shape:
     """The flattened outline of one glyph."""
 
-    def __init__(self, segments, advance):
+    def __init__(self, segments, advance, contours=()):
         self.segments = segments
         self.advance = advance
+        self.contours = contours
         points = [point for segment in segments for point in segment]
         self.empty = not points
         if not self.empty:
@@ -117,7 +122,8 @@ class Shape:
 class Font:
     """Glyph outlines, code points and composites of a UFO or a compiled font."""
 
-    def __init__(self, glyph_set, code_points, advances, components, units_per_em, anchors=None):
+    def __init__(self, glyph_set, code_points, advances, components, units_per_em, anchors=None,
+                 mark_colors=None):
         self.glyph_set = glyph_set
         self.code_points = code_points        # glyph name: code point
         self.names = {value: name for name, value in code_points.items()}
@@ -125,16 +131,26 @@ class Font:
         self.components = components          # glyph name: [(base, dx, dy)]
         self.units_per_em = units_per_em
         self.anchors = anchors or {}          # glyph name: {anchor: (x, y)}
+        self.mark_colors = mark_colors or {}  # glyph name: the public.markColor value
         self.shapes = {}
         self.lines = [self.shape(name).top for name in map(self.names.get, map(ord, 'xHl'))
                       if name and not self.shape(name).empty]
 
     @classmethod
-    def from_compiled(cls, path):
+    def from_compiled(cls, path, weight=None):
+        """A compiled font. With `weight`, a variable font is read at that
+        value of its weight axis, limited to the range of the axis."""
         from fontTools.ttLib import TTFont
         font = TTFont(path)
         if 'glyf' not in font:
             raise ValueError(f'{path}: no glyf table')
+        if weight is not None and 'fvar' in font:
+            from fontTools.varLib.instancer import instantiateVariableFont
+            location = {axis.axisTag: axis.defaultValue for axis in font['fvar'].axes}
+            for axis in font['fvar'].axes:
+                if axis.axisTag == 'wght':
+                    location['wght'] = min(max(weight, axis.minValue), axis.maxValue)
+            font = instantiateVariableFont(font, location)
         glyf, components = font['glyf'], {}
         for name in font.getGlyphOrder():
             glyph = glyf[name]
@@ -153,7 +169,7 @@ class Font:
         from fontTools.ufoLib.glifLib import GlyphSet
         path = Path(path)
         glyph_set = GlyphSet(str(path / 'glyphs'), validateRead=False)
-        code_points, advances, components, anchors = {}, {}, {}, {}
+        code_points, advances, components, anchors, mark_colors = {}, {}, {}, {}, {}
         for name, file_name in glyph_set.contents.items():
             root = ET.parse(path / 'glyphs' / file_name).getroot()
             unicode = root.find('unicode')
@@ -163,6 +179,10 @@ class Font:
             advances[name] = float(advance.get('width', 0)) if advance is not None else 0
             anchors[name] = {anchor.get('name'): (float(anchor.get('x')), float(anchor.get('y')))
                              for anchor in root.findall('anchor') if anchor.get('name')}
+            entries = list(root.find('lib/dict')) if root.find('lib/dict') is not None else []
+            for key, value in zip(entries, entries[1:]):
+                if key.tag == 'key' and key.text == 'public.markColor':
+                    mark_colors[name] = value.text
             parts = root.findall('outline/component')
             # A scaled or rotated component is not a plain accent.
             plain = all(float(part.get(key, default)) == default
@@ -175,13 +195,13 @@ class Font:
         if (path / 'fontinfo.plist').is_file():
             with open(path / 'fontinfo.plist', 'rb') as file:
                 units_per_em = plistlib.load(file).get('unitsPerEm', units_per_em)
-        return cls(glyph_set, code_points, advances, components, units_per_em, anchors)
+        return cls(glyph_set, code_points, advances, components, units_per_em, anchors, mark_colors)
 
     def shape(self, name):
         if name not in self.shapes:
             pen = Flatten(self.glyph_set)
             self.glyph_set[name].draw(pen)
-            self.shapes[name] = Shape(pen.segments, self.advances.get(name, 0))
+            self.shapes[name] = Shape(pen.segments, self.advances.get(name, 0), pen.contours)
         return self.shapes[name]
 
     def accents(self):

@@ -77,6 +77,9 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
 | `fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]` | List the accented letters whose mark is not where the other accented letters predict, or not where the anchors of its parts are. See [Accent placement](#accent-placement). |
+| `fgtools place-anchors [--set NAME] [--master NAME] [--include-green] [--write]` | Add the `top`, `bottom`, `_top` and `_bottom` anchors that are missing on the base letters and the marks of a set of accented letters. See [Accented letters](#accented-letters). |
+| `fgtools build-accented-letters [--set NAME] [--characters TEXT] [--glyphs "NAMES"] [--replace-drafts] [--write]` | Add the accented letters of a set as purple composites, in every master. |
+| `fgtools render-accent-proofs [--master NAME] [--glyphs "NAMES"] [--references DIR] [--out DIR]` | Draw each accented letter beside the reference fonts, and measure it against them. |
 | `fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. Without fonts, it uses one upright font of each family of the [reference fonts](#reference-fonts). |
 | `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
@@ -103,6 +106,8 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.evaluate_drafting` | `evaluate-drafting` |
 | `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
 | `fontgarden.accent_placement` | `check-accents`, `evaluate-accent-placement` |
+| `fontgarden.accented_letters` | `place-anchors`, `build-accented-letters` |
+| `fontgarden.accent_proofs` | `render-accent-proofs` |
 | `fontgarden.reference_fonts` | `fetch-reference-fonts` |
 | `fontgarden.list_corrections` | `corrections` |
 | `fontgarden.build_source_snapshot` | `build` |
@@ -142,6 +147,53 @@ left out, because it is drawn as an apostrophe beside the letter.
 the `calibrated` method where the first has no prediction. It does not
 change the sources. A listed letter is a reason to look: a mark on the stem
 of L is correct and is not where the centered marks predict.
+
+## Accented letters
+
+Three commands do the work on accented letters, and a review closes it:
+
+1. `place-anchors` adds the anchors that are missing. An anchor that is in
+   the sources is the designer's and does not change. A missing anchor is
+   fitted to the accented letters that are in the sources (the `anchors`
+   method), or comes from the outline for a glyph that no accented letter
+   uses. Purple and red accented letters are not evidence. Green glyphs are
+   left out without `--include-green`.
+2. `build-accented-letters` adds each accented letter of a set that is not
+   in the sources, as a purple composite at the offset
+   `anchor of the base - anchor of the mark`, in every master, and adds it to
+   `contents.plist` and `public.glyphOrder`. The sets are in
+   `fontgarden/accented_letters.toml`. The default, `google-fonts-latin-core`,
+   has the 145 accented letters of the Google Fonts Latin Core glyph set.
+   `--replace-drafts` also sets the components of the purple accented
+   letters again. The command lists the letters that it does not build:
+   two marks, the caron of d, t, l and L, and the comma accent of g.
+3. `render-accent-proofs` draws each accented letter of the project beside
+   the same character in each family of the [reference fonts](#reference-fonts),
+   at the weight of the master, and writes `review.json`. A letter gets a
+   finding when its mark is outside the range of the reference fonts, not
+   where the other accented letters of the project predict, or not where
+   the anchors of its parts are. The sheets show every letter, the letters
+   with findings first.
+
+Both writing commands print their list and change nothing without `--write`.
+
+The review is the work of an agent that can read images, or of the designer.
+The task contract `accented-letters.md` and the skill `accent-review` of the
+[project template](https://github.com/fontgarden/font-project-template) give
+the method and the rules of a correct accented letter. The reviewer gives
+each letter a verdict: `correct`, `fault` or `designer`. A finding is a
+reason to look. It is not a fault, because the reference fonts do not
+dictate the design.
+
+A trial on Virtua Grotesk on 2026-11-15 removed all 145 accented letters
+from a copy of both masters and built them again. With the anchors of the
+designer in place, 269 of 280 composites (96%) were within 8 units of the
+position of the designer. The other 11 are letters that the designer placed
+away from the anchors, mostly ogoneks. With the `top` and `bottom` anchors
+also removed, 60% were within 8 units and 80% within 20 units: the vertical
+position was correct for all but one letter, and the horizontal position of
+acute, grave, cedilla and ogonek needs the anchors of a designer or the
+review.
 
 ## Reference fonts
 
