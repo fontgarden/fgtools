@@ -19,6 +19,8 @@ COMMANDS = {
     'queue': ('check_design', ['--queue'], 'Rank the glyphs that most composites wait on'),
     'check-design': ('check_design', [], 'Check glyphs against sources/design.toml'),
     'check-changes': ('check_changes', [], 'Check source changes against a base revision'),
+    'report-grid-levels': ('grid_levels', [],
+                           'Count the points, advances and kerning at each level of the grid'),
     'lint-glifs': ('glif_lint', [], 'Find structural faults in the GLIF files'),
     'lint-curves': ('curve_lint', [], 'Curve fairness checks of one master'),
     'evaluate-drafting': ('evaluate_drafting', [], 'Prepare, score and compare drafting evaluations'),

@@ -29,6 +29,11 @@ It fails (exit status 1) when:
 It also prints the other design check findings (stroke ranges, kinks) for each
 changed glyph. Those are for review and do not fail the check.
 
+For a changed purple glyph it prints the new points that are off the grid of
+machine drafts (`grid.machine_draft` of sources/design.toml, 8 units). A
+point that the base revision has is not new. A new point off that grid needs
+a reason: a stroke value of the designer, or a derived point.
+
 The project root must be the top level of its Git repository.
 """
 from __future__ import annotations
@@ -87,6 +92,16 @@ def contours_at(base, path):
     except subprocess.CalledProcessError:
         return None
     return re.findall(r'<contour>.*?</contour>', text, re.S)
+
+
+POINT = re.compile(r'<point x="([-\d.]+)" y="([-\d.]+)"')
+
+
+def new_points_off_grid(text, base_text, grid):
+    """The points of a GLIF text that are off `grid` and are not in the base text."""
+    before = set(POINT.findall(base_text or ''))
+    return sorted({(float(x), float(y)) for x, y in set(POINT.findall(text)) - before
+                   if float(x) % grid or float(y) % grid})
 
 
 def draw_proofs(base, glyphs, directory):
@@ -155,6 +170,17 @@ def main():
             drawn = re.findall(r'<contour>.*?</contour>', (root / record['path']).read_text(), re.S)
             if drawn and drawn != contours_at(args.base, record['path']) and color != 'purple':
                 errors.append(f'{label}: contours changed and the glyph is {color}, not purple')
+            draft_grid = contract.get('grid', {}).get('machine_draft')
+            if drawn and color == 'purple' and draft_grid:
+                try:
+                    base_text = git('show', f'{args.base}:{record["path"]}')
+                except subprocess.CalledProcessError:
+                    base_text = ''
+                found = new_points_off_grid((root / record['path']).read_text(), base_text, draft_grid)
+                if found:
+                    points = ', '.join(f'{x:g},{y:g}' for x, y in found[:6])
+                    notes.append(f'{label}: {len(found)} new points off the {draft_grid}-unit grid of '
+                                 f'machine drafts ({points}{", ..." if len(found) > 6 else ""})')
             if not record['contours'] and color == 'green' and was != 'green':
                 if ready is None:
                     ready = set(subprocess.run(

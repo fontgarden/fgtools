@@ -76,6 +76,7 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting compare RUN RUN` | Compare the scores of two runs. |
 | `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
+| `fgtools report-grid-levels [--master NAME] [--glyphs "NAMES"]` | Count the points on the 8-unit grid, on the 2-unit grid only, and off both, by script and mark color, with the advances and kerning values off the 8-unit grid. With `--glyphs`, list the points of each named glyph that are off the 8-unit grid. |
 | `fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]` | List the accented letters whose mark is not where the other accented letters predict, or not where the anchors of its parts are. See [Accent placement](#accent-placement). |
 | `fgtools place-anchors [--set NAME] [--master NAME] [--include-green] [--write]` | Add the `top`, `bottom`, `_top` and `_bottom` anchors that are missing on the base letters and the marks of a set of accented letters. See [Accented letters](#accented-letters). |
 | `fgtools build-accented-letters [--set NAME] [--characters TEXT] [--glyphs "NAMES"] [--replace-drafts] [--write]` | Add the accented letters of a set as purple composites, in every master. |
@@ -105,6 +106,7 @@ runs one module, so `python -m fontgarden.status --print` is the same as
 | `fontgarden.curve_lint` | `lint-curves` |
 | `fontgarden.evaluate_drafting` | `evaluate-drafting` |
 | `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
+| `fontgarden.grid_levels` | `report-grid-levels` |
 | `fontgarden.accent_placement` | `check-accents`, `evaluate-accent-placement` |
 | `fontgarden.accented_letters` | `place-anchors`, `build-accented-letters` |
 | `fontgarden.accent_proofs` | `render-accent-proofs` |
