@@ -18,8 +18,6 @@ purple; the column "against" gives the mark of that version:
 
     fgtools corrections          the open corrections, then a summary by month
     fgtools corrections --all    every review, then the summary
-    fgtools corrections --since REV
-                                 the glyphs of a review pass that began at REV
 
 A correction is open until a tracked file or a later commit message cites the
 first 7 or more characters of its review commit: a rule entry ("Seen in"), a
@@ -28,13 +26,6 @@ commit that changes a check. The summary shows whether the drafts improve:
 the grades rise, more drafts are accepted, and the overlap with Eli's version
 increases. Edits of a glyph that stays purple are not visible, so Eli
 changes the mark in the commit that grades or corrects the draft.
-
-A review pass changes glyphs that are not purple, for example orange glyphs
-that Eli redraws. Commit the sources before the pass, then give that commit
-with --since. Each glyph that is not green at REV and changed after it is
-a review: the version at REV is the draft, the version at HEAD is Eli's
-version, and its mark at HEAD is the grade. The commit of the review is the
-last commit after REV that changed the glyph.
 
 Reviews before `[corrections] start` in sources/design.toml are not listed,
 for example the reviews from before a project used the grades.
@@ -150,27 +141,6 @@ def reviews(root=None):
     return rows
 
 
-def pass_reviews(since, root=None):
-    """The reviews of a review pass that began at commit `since`."""
-    source = project.load(root)
-    colors = source.design()['colors']
-    folders = {f'{source.ufo_relative(m)}/glyphs/': m for m in source.masters}
-    rows = []
-    paths = git('diff', '--name-only', '--diff-filter=M', since, 'HEAD', '--',
-                *[f'{folder}*.glif' for folder in folders], root=root).split()
-    for path in paths:
-        draft, after = git('show', f'{since}:{path}', root=root), git('show', f'HEAD:{path}', root=root)
-        if color(draft, colors) == 'green':
-            continue
-        commit, date = git('log', '-1', '--format=%H %as', f'{since}..HEAD', '--', path, root=root).split()
-        row = dict(commit=commit, date=date, glyph=re.search(r'<glyph name="([^"]+)"', draft)[1],
-                   master=folders[path.rsplit('/', 1)[0] + '/'], grade=color(after, colors),
-                   against='HEAD', was=color(draft, colors))
-        row.update(outcome(draft, after))
-        rows.append(row)
-    return sorted(rows, key=lambda row: (row['date'], row['glyph']))
-
-
 def citations(root=None):
     """7-character prefixes of the hashes in commit messages and tracked files."""
     text = git('log', '--format=%B', root=root) + git(
@@ -185,25 +155,9 @@ def number(value, digits):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     parser.add_argument('--all', action='store_true', help='list every review')
-    parser.add_argument('--since', metavar='REV',
-                        help='the reviews of a review pass that began at this commit')
     args = parser.parse_args()
     cited, months = citations(), {}
     start = str(project.load().design().get('corrections', {}).get('start', ''))
-    if args.since:
-        rows = pass_reviews(args.since)
-        print(f"{'date':10}  {'commit':8}  {'master':7}  {'glyph':24}  {'was':6}  {'grade':6}  "
-              f"{'result':9}  {'iou':>5}  {'dist':>5}  cited")
-        for row in rows:
-            row['cited'] = row['commit'][:7] in cited
-            print(f"{row['date']}  {row['commit'][:8]}  {row['master']:7}  {row['glyph']:24}  "
-                  f"{row['was']:6}  {row['grade']:6}  {row['result']:9}  {number(row['iou'], 3):>5}  "
-                  f"{number(row['distance'], 1):>5}  {'yes' if row['cited'] else ''}")
-        corrected = [row for row in rows if row['result'] == 'corrected']
-        print(f"\n{len(rows)} glyphs reviewed since {args.since[:8]}: {len(corrected)} corrected, "
-              f"{len(rows) - len(corrected)} accepted, "
-              f"{sum(1 for row in corrected if not row['cited'])} corrections open")
-        return 0
     print(f"{'date':10}  {'commit':8}  {'master':7}  {'glyph':24}  {'grade':6}  {'against':7}  {'result':9}  "
           f"{'iou':>5}  {'dist':>5}  cited")
     for row in reviews():

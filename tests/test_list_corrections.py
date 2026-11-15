@@ -77,16 +77,6 @@ class History(unittest.TestCase):
             commit(f'Add a rule entry from {correction[:8]}')
             self.assertIn(correction[:7], corrections.citations(root))
 
-            # A review pass of glyphs that are not purple.
-            start = commit('Before the pass', glif(ORANGE, right=150))
-            self.assertEqual(corrections.pass_reviews(start, root), [])
-            edit = commit('Thinner bar', glif(ORANGE, right=130))
-            [row] = corrections.pass_reviews(start, root)
-            self.assertEqual((row['commit'], row['was'], row['grade'], row['result']),
-                             (edit, 'orange', 'orange', 'corrected'))
-            commit('Approve', glif(GREEN, right=130))
-            [row] = corrections.pass_reviews(start, root)
-            self.assertEqual((row['grade'], row['result']), ('green', 'corrected'))
 
 
 if __name__ == '__main__':
