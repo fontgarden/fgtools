@@ -41,17 +41,16 @@ def cache_dir():
 
 
 def find_runebender():
-    """The path of the Runebender binary, or None."""
-    for candidate in (os.environ.get('RUNEBENDER'),
-                      Path.home() / 'GH/repos/runebender/target/release/runebender',
-                      shutil.which('runebender')):
+    """The path of the Runebender binary: RUNEBENDER, or `runebender` on PATH."""
+    for candidate in (os.environ.get('RUNEBENDER'), shutil.which('runebender')):
         if candidate and Path(candidate).exists():
             return str(candidate)
     return None
 
 
 def runebender():
-    return find_runebender() or sys.exit('Runebender binary not found. Set RUNEBENDER to its path.')
+    return find_runebender() or sys.exit('Runebender not found. Install it with `cargo install --locked --git '
+                                     'https://github.com/fontgarden/runebender runebender`, or set RUNEBENDER.')
 
 
 def script_of(name, record=None):
