@@ -47,13 +47,13 @@ class CheckRepository(unittest.TestCase):
 
     def test_stale_references_are_found(self):
         (self.root / 'README.md').write_text(
-            'See [the notes](documentation/notes.md), `scripts/old.sh` and `make proof`.\n'
-            'Run `make build`. `scripts/fontspector_checks.py` is optional.\n'
-            'The file `scripts/gone.sh` is in the Git history.\n')
+            'See [the notes](documentation/notes.md), `sources/old.sh` and `make proof`.\n'
+            'Run `make build`. `sources/fontspector_checks.py` is optional.\n'
+            'The file `sources/gone.sh` is in the Git history.\n')
         self.add()
         self.assertEqual(check_repository.problems(self.root), [
             'README.md:1: link documentation/notes.md',
-            'README.md:1: path scripts/old.sh',
+            'README.md:1: path sources/old.sh',
             'README.md:1: make proof'])
 
 

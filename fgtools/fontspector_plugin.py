@@ -20,7 +20,7 @@ Font.Garden requirements:
     fontgarden/precomposed_match   a precomposed letter matches its sequence
 
 A project adds the checks that only its font needs in
-scripts/fontspector_checks.py, written as the checks here. They run in the
+sources/fontspector_checks.py, written as the checks here. They run in the
 same profile, in the section "This font".
 
 `fgtools qa` runs Fontspector with this plugin. Add a requirement as a check
@@ -59,7 +59,7 @@ DOTTED_CIRCLE = '\u25CC'
 # `fgtools qa` gives the plugin the root of the project in this variable. A
 # project can add its own checks in this file.
 PROJECT_ROOT = 'FGTOOLS_PROJECT'
-PROJECT_CHECKS = 'scripts/fontspector_checks.py'
+PROJECT_CHECKS = 'sources/fontspector_checks.py'
 
 
 @check(id='fontgarden/unitsperem', title='The em is 1024 units',
@@ -409,7 +409,7 @@ def precomposed_match(font_path: Path, context: CheckContext) -> CheckStatuses:
 
 def project_checks():
     """The checks of the project itself: the functions with @check in
-    scripts/fontspector_checks.py of the project, if the file exists."""
+    sources/fontspector_checks.py of the project, if the file exists."""
     root = os.environ.get(PROJECT_ROOT)
     path = Path(root) / PROJECT_CHECKS if root else None
     if path is None or not path.is_file():

@@ -46,8 +46,8 @@ OPTIONAL = [
     'sources/specimen/*',
     # Text samples of this project for the proofs.
     'sources/proof-samples.toml',
-    # Tools and Fontspector checks that only this font needs.
-    'scripts/*.py',
+    # Build steps and Fontspector checks that only this font needs.
+    'sources/*.py',
     # The Google Fonts article and the DesignBot scripts of the images.
     'documentation/article/**', 'documentation/readme-images/*.rs',
 ]
@@ -59,7 +59,7 @@ GENERATED = {'STATUS.md'}
 MAX_FILE_BYTES = 500_000
 MAX_SPECIMEN_BYTES = 8_000_000
 
-TOP = ('scripts/', 'documentation/', 'sources/', 'tests/', '.agents/', '.github/')
+TOP = ('documentation/', 'sources/', '.agents/', '.github/')
 LINK = re.compile(r'\]\(([^)#\s]+)(?:#[^)]*)?\)')
 CODE = re.compile(r'`([^`\s]+)`')
 MAKE = re.compile(r'`make ([a-z][a-z0-9-]*)')
