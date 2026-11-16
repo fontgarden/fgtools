@@ -8,7 +8,7 @@ and reads nothing else.
     fgtools check-changes                        compare with main
     fgtools check-changes --base HEAD~3          compare with another revision
     fgtools check-changes --glyphs "a e seen-ar" allow changes to these glyphs only
-    fgtools check-changes --proof out/review     also draw SVG proof sheets of
+    fgtools check-changes --proof output/review     also draw SVG proof sheets of
                                                     the changed glyphs, before
                                                     and after
 

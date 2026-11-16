@@ -36,8 +36,8 @@ from fontgarden import source_inventory as inventory
 
 
 def cache_dir():
-    """The cache of Runebender measurements, in out/ of the current project."""
-    return project.load().root / 'out/check-design-cache'
+    """The cache of Runebender measurements, in output/ of the current project."""
+    return project.load().root / 'output/check-design-cache'
 
 
 def find_runebender():

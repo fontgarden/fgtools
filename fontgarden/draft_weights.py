@@ -22,7 +22,7 @@ two masters is an extrapolation, and it makes every difference between the
 two masters larger. A glyph that is not compatible in the two masters is
 copied from the nearer master, and the report lists it.
 
-The drafts are written to out/weights/, which Git ignores, with a
+The drafts are written to output/weights/, which Git ignores, with a
 designspace that has the masters of the project and the drafts. Every
 drafted glyph is purple. Nothing in sources/ is changed.
 """
@@ -41,7 +41,7 @@ from pathlib import Path
 from fontgarden import project
 from fontgarden.build_source_snapshot import tool_path
 
-OUTPUT = 'out/weights'
+OUTPUT = 'output/weights'
 PURPLE = '0.54,0.44,0.88,1'
 TAG = re.compile(r'<(advance|point|anchor|component)\b([^>]*?)/?>')
 ATTRIBUTE = re.compile(r'\b(\w+)="([^"]*)"')

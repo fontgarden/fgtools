@@ -12,7 +12,7 @@ The proof shows the font beside the fonts in reference-fonts/ at one em size
 and weight. The current build is the variable font in the fonts directory.
 Except with --directory, the server reads reference-fonts/ again when its
 files change. It does not read the UFO sources: build again after an edit.
-Generated files go to out/proof-web/.
+Generated files go to output/proof-web/.
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ from fontTools.ttLib import TTFont
 from fontgarden import project
 from fontgarden.proof_web.prepare import prepare, prepare_live
 
-OUTPUT = 'out/proof-web'
+OUTPUT = 'output/proof-web'
 SELECTION = f'{OUTPUT}/selection.json'
 DEFAULT_PORT = 60272
 

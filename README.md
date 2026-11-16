@@ -83,11 +83,11 @@ be the top level of its Git repository.
 | `fgtools render-accent-proofs [--master NAME] [--glyphs "NAMES"] [--references DIR] [--out DIR]` | Draw each accented letter beside the reference fonts, and measure it against them. |
 | `fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. Without fonts, it uses one upright font of each family of the [reference fonts](#reference-fonts). |
 | `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. With `--project`, get the families that `CONTEXT.md` lists into `reference-fonts/` of the project. |
-| `fgtools draft-weights [NAME ...] [--build]` | Draft the masters of more weights, for example Thin and Black, from two masters. Each `[weights.<name>]` table of `CONTEXT.md` names the two masters and gives the vertical stem and the horizontal stroke of each master and of the weight. Each coordinate is calculated on the line through its two values, with one position for x and one for y. The drafts go to `out/weights/` with a designspace of all masters, every drafted glyph is purple, and `sources/` does not change. The report lists the glyphs that are not compatible in the two masters and the glyphs with a contour that turned inside out. `--build` compiles a variable font with fontc. |
+| `fgtools draft-weights [NAME ...] [--build]` | Draft the masters of more weights, for example Thin and Black, from two masters. Each `[weights.<name>]` table of `CONTEXT.md` names the two masters and gives the vertical stem and the horizontal stroke of each master and of the weight. Each coordinate is calculated on the line through its two values, with one position for x and one for y. The drafts go to `output/weights/` with a designspace of all masters, every drafted glyph is purple, and `sources/` does not change. The report lists the glyphs that are not compatible in the two masters and the glyphs with a contour that turned inside out. `--build` compiles a variable font with fontc. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
-| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `out/qa/`. |
-| `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
+| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
+| `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `output/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
 | `fgtools proof-web [--current \| --snapshot DIR \| --directory DIR] [--port N] [--check]` | Serve the font beside `reference-fonts/` in a browser. See [Web proof](#web-proof). |
@@ -242,7 +242,7 @@ else the first TTF in the fonts directory. The page title is `familyName`
 of `config.yaml`. The server reads `reference-fonts/` again when its files
 change. It does not read the UFO sources, so build again after an edit.
 `--check` prepares and checks the files and does not start the server.
-Generated files go to `out/proof-web/`.
+Generated files go to `output/proof-web/`.
 
 The modes are Compare, Toggle (Before and Candidate in place, key B),
 Waterfall and Text. The samples are live browser text. The proof checks the

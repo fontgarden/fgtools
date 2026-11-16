@@ -128,7 +128,7 @@ class AccentProofs(unittest.TestCase):
         self.temp.cleanup()
 
     def test_a_displaced_mark_differs_from_the_reference_fonts(self):
-        out = self.root / 'out/accent-proofs'
+        out = self.root / 'output/accent-proofs'
         status, text = quiet(accent_proofs.render, self.root, references=str(self.references))
         self.assertEqual(status, 0, text)
         data = json.loads((out / 'review.json').read_text())['Regular']

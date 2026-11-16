@@ -2,7 +2,7 @@
 
     fgtools proof-web render-detail --text TEXT --weight 700 --output FILE
 
-The fonts are those of the live proof (out/proof-web/live), or of
+The fonts are those of the live proof (output/proof-web/live), or of
 --proof-dir. Each font uses the face nearest to the weight, at one em size.
 The command checks the font hashes and stops when a font does not cover the
 text: it does not use fallback fonts. It writes the PNG and, next to it, a
@@ -45,7 +45,7 @@ def nearest_face(font, weight):
 
 def main(argv=None, prog=None):
     parser = argparse.ArgumentParser(prog=prog, description=__doc__.split('\n')[0])
-    parser.add_argument('--proof-dir', type=Path, help='default out/proof-web/live')
+    parser.add_argument('--proof-dir', type=Path, help='default output/proof-web/live')
     parser.add_argument('--output', type=Path, required=True, help='the PNG file')
     parser.add_argument('--text', required=True)
     parser.add_argument('--title', default='Detail')
@@ -57,7 +57,7 @@ def main(argv=None, prog=None):
     if shutil.which('designbot') is None:
         parser.exit(1, 'render-detail needs the `designbot` command, which is not on PATH. '
                        'The web proof works without it.\n')
-    root = (args.proof_dir or project.load().root / 'out/proof-web/live').resolve()
+    root = (args.proof_dir or project.load().root / 'output/proof-web/live').resolve()
     manifest = json.loads((root / 'live-fonts.json').read_text())
     after = manifest['after']
     axis = after.get('axes', {}).get('wght')

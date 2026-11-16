@@ -48,7 +48,7 @@ class DraftWeights(unittest.TestCase):
         return code, output.getvalue()
 
     def glyph(self, weight, name):
-        return (self.root / f'out/weights/Test-{weight}.ufo/glyphs/{name}.glif').read_text()
+        return (self.root / f'output/weights/Test-{weight}.ufo/glyphs/{name}.glif').read_text()
 
     def test_a_coordinate_is_on_the_line_through_the_two_masters(self):
         code, output = self.run_command('Black')
@@ -80,7 +80,7 @@ class DraftWeights(unittest.TestCase):
 
     def test_the_designspace_has_the_masters_and_the_drafts(self):
         self.run_command('Black')
-        root = ET.parse(self.root / 'out/weights/Test.designspace').getroot()
+        root = ET.parse(self.root / 'output/weights/Test.designspace').getroot()
         self.assertEqual(root.find('axes/axis').get('maximum'), '900')
         self.assertEqual([source.get('filename') for source in root.findall('sources/source')],
                          ['../../sources/Test-Regular.ufo', '../../sources/Test-Bold.ufo',

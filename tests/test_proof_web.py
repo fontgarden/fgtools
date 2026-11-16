@@ -122,7 +122,7 @@ class CurrentBuild(unittest.TestCase):
             self.assertEqual(serve.current_font(project.load()).name, 'TestSans[wght].ttf')
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(serve.main(['--current', '--check']), 0)
-            live = root / 'out/proof-web/live'
+            live = root / 'output/proof-web/live'
             data = reference_fonts.read_review_data(live)
             self.assertEqual(data['fonts']['after']['family'], 'Test Sans')
             self.assertEqual(data['fonts']['after']['weight'], '400 700')
@@ -144,29 +144,29 @@ class CurrentBuild(unittest.TestCase):
         with font_project() as root:
             with self.assertRaises(SystemExit):
                 serve.selected_snapshot(root)
-            serve.remember(root, root / 'out/study/snapshot')
-            self.assertEqual(json.loads((root / serve.SELECTION).read_text()), {'snapshot': 'out/study/snapshot'})
-            self.assertEqual(serve.selected_snapshot(root), root / 'out/study/snapshot')
+            serve.remember(root, root / 'output/study/snapshot')
+            self.assertEqual(json.loads((root / serve.SELECTION).read_text()), {'snapshot': 'output/study/snapshot'})
+            self.assertEqual(serve.selected_snapshot(root), root / 'output/study/snapshot')
             self.assertEqual(serve.selected_snapshot(root, Path('/explicit')), Path('/explicit').resolve())
 
     def test_prepare_checks_the_hashes_of_the_comparison(self):
         with font_project() as root:
-            comparison = root / 'out/comparison.json'
+            comparison = root / 'output/comparison.json'
             path = root / 'fonts/variable/TestSans[wght].ttf'
             record = {'family': 'Test Sans', 'path': str(path), 'sha256': '0' * 64}
             comparison.parent.mkdir()
             comparison.write_text(json.dumps({'fonts': {'after': record}}))
             with self.assertRaisesRegex(ValueError, 'differs from the hash'):
-                prepare.prepare(comparison, root / 'out/snapshot')
+                prepare.prepare(comparison, root / 'output/snapshot')
             record['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
             comparison.write_text(json.dumps({'fonts': {'before': record, 'after': {**record, 'label': 'New'}}}))
-            data = reference_fonts.read_review_data(prepare.prepare(comparison, root / 'out/snapshot'))
+            data = reference_fonts.read_review_data(prepare.prepare(comparison, root / 'output/snapshot'))
             self.assertEqual((data['fonts']['before']['label'], data['fonts']['after']['label']), ('Before', 'New'))
 
 
 class Server(unittest.TestCase):
     def test_reuses_only_a_matching_server_with_the_same_fonts(self):
-        identity = serve.server_identity(Path('/project'), Path('/project/out/live'), True)
+        identity = serve.server_identity(Path('/project'), Path('/project/output/live'), True)
         fonts = {'before': {'sha256': 'frozen'}}
 
         def responses(other_identity, other_fonts):
@@ -187,7 +187,7 @@ class Server(unittest.TestCase):
     def test_serves_files_identity_and_references(self):
         with font_project() as root, contextlib.redirect_stderr(io.StringIO()):
             source = project.load()
-            live = root / 'out/live'
+            live = root / 'output/live'
             cache = prepare.prepare_live(serve.prepare_current(source), live, source)
             identity = serve.server_identity(root, live, True)
             server = ThreadingHTTPServer(('127.0.0.1', 0), serve.handler(live, identity, cache))

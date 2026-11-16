@@ -7,7 +7,7 @@
     fgtools qa --package DIR      an assembled google/fonts package
 
 The profile includes the Google Fonts profile; see fontspector_plugin.py.
-Reports go to out/qa/<mode>/. A FAIL gives a failing exit status.
+Reports go to output/qa/<mode>/. A FAIL gives a failing exit status.
 
 A project lists its known development debt in CONTEXT.md, each
 check with the reason it is excluded:
@@ -56,7 +56,7 @@ def main():
     missing = [str(p) for p in inputs if not p.is_file()]
     if missing:
         sys.exit(f'Missing: {", ".join(missing)}')
-    reports = source.root / 'out/qa' / name
+    reports = source.root / 'output/qa' / name
     reports.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='fontgarden-qa-') as temporary:
         plugin = Path(temporary) / 'fontgarden-fontspectorplugin'

@@ -6,7 +6,7 @@
 
 The command reads the masters of the project and one font of each family of
 the shared reference fonts, at the weight of the master. It does not change
-the sources. It writes, to out/accent-proofs/:
+the sources. It writes, to output/accent-proofs/:
 
     <Master>-01.png ...   proof sheets, the letters with findings first
     review.json           the measurements and the findings of each letter
@@ -255,7 +255,7 @@ def reference_paths(directory, weight):
 
 def render(root=None, master=None, glyphs=None, references=None, out=None, rows=6):
     layout = project.load(root)
-    out = Path(out) if out else layout.root / 'out/accent-proofs'
+    out = Path(out) if out else layout.root / 'output/accent-proofs'
     out.mkdir(parents=True, exist_ok=True)
     for old in out.glob('*-[0-9][0-9].png'):
         old.unlink()
@@ -305,7 +305,7 @@ def main():
     parser.add_argument('--glyphs', default='', help='only these glyph names, space-separated')
     parser.add_argument('--references',
                         help=f'the reference font collection (default: ${reference_fonts.VARIABLE})')
-    parser.add_argument('--out', help='output directory (default: out/accent-proofs)')
+    parser.add_argument('--out', help='output directory (default: output/accent-proofs)')
     parser.add_argument('--rows', type=int, default=6, help='letters on one sheet (default: 6)')
     args = parser.parse_args()
     return render(master=args.master, glyphs=set(args.glyphs.split()), references=args.references,

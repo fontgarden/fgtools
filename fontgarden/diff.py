@@ -10,7 +10,7 @@
 Both sides are built the same way, by `fgtools build` into a temporary
 folder, so project steps after the build do not show as differences. For
 each font file that both builds have, diffenator3 writes an HTML report to
-out/diff/<font>/ and this command prints a summary: the glyph images and
+output/diff/<font>/ and this command prints a summary: the glyph images and
 word images that differ at each location, changed kerning, changed tables,
 cmap changes and changed language support.
 
@@ -108,10 +108,10 @@ def main():
             if font.name not in old_by_name:
                 print(f'{font.name}: only in {labels[1]}')
                 continue
-            output = source.root / 'out/diff' / font.stem
+            output = source.root / 'output/diff' / font.stem
             lines, images = summary(diffenator(old_by_name[font.name], font, output))
             changed |= images
-            print(f'{font.name}: out/diff/{font.stem}/')
+            print(f'{font.name}: output/diff/{font.stem}/')
             print('\n'.join(lines))
         for name in sorted(set(old_by_name) - {font.name for font in new}):
             print(f'{name}: only in {labels[0]}')
