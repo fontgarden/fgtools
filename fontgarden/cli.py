@@ -34,6 +34,8 @@ COMMANDS = {
                                'Add the accented letters of a set as purple composites'),
     'render-accent-proofs': ('accent_proofs', [],
                              'Draw each accented letter beside the reference fonts, and measure it against them'),
+    'draft-weights': ('draft_weights', [],
+                      'Draft the masters of more weights from two masters'),
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
     'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
