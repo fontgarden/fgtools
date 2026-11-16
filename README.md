@@ -5,7 +5,7 @@ masters of a project, report their mark colors, check glyphs against the
 design targets, check source changes before review, lint the outlines,
 evaluate drafting methods and list the reviews of drafts from the Git
 history. `proof-web` shows a build beside reference fonts in a browser.
-The tools do not change the UFO sources.
+Most tools only read the UFO sources. The commands that change them say so: `edit`, `place-anchors --write`, `build-accented-letters --write` and `customize`.
 
 The package installs one command, `fgtools`.
 
@@ -87,6 +87,8 @@ be the top level of its Git repository.
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
+| `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. |
+| `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
 | `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `output/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
@@ -118,6 +120,8 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.build_source_snapshot` | `build` |
 | `fgtools.qa`, `fgtools.fontspector_plugin`, `fgtools.shaped_font` | `qa` |
 | `fgtools.check_repository` | `check-repository` |
+| `fgtools.render_glyphs` | `render` |
+| `fgtools.edit_glyph` | `edit` |
 | `fgtools.diff` | `diff` |
 | `fgtools.install_tools` | `install-tools` |
 | `fgtools.customize` | `customize` |

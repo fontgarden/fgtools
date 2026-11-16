@@ -39,6 +39,8 @@ COMMANDS = {
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
     'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
+    'edit': ('edit_glyph', [], 'Change a glyph with a calculated operation: an edge, the sidebearings, a mirrored copy'),
+    'render': ('render_glyphs', [], 'Draw glyphs large: change, fill, points, donors and reference fonts'),
     'check-repository': ('check_repository', [], 'Check the file layout and the references of the documents'),
     'diff': ('diff', [], 'Compare two builds with diffenator3'),
     'proof-web': ('proof_web', [], 'Serve the font beside reference-fonts/ in a browser'),
