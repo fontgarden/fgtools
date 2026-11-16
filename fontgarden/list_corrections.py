@@ -27,7 +27,7 @@ the grades rise, more drafts are accepted, and the overlap with Eli's version
 increases. Edits of a glyph that stays purple are not visible, so Eli
 changes the mark in the commit that grades or corrects the draft.
 
-Reviews before `[corrections] start` in context.md are not listed,
+Reviews before `[corrections] start` in CONTEXT.md are not listed,
 for example the reviews from before a project used the grades.
 
 The project root must be the top level of its Git repository.

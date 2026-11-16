@@ -33,7 +33,7 @@ class Layout(unittest.TestCase):
         self.assertEqual(source.ufo_relative('Regular'), 'sources/Test-Regular.ufo')
         self.assertEqual(source.ufo('Regular', '/copy'), Path('/copy/sources/Test-Regular.ufo'))
         self.assertEqual(source.fonts, self.root / 'fonts')
-        self.assertEqual(source.design_config, self.root / 'context.md')
+        self.assertEqual(source.design_config, self.root / 'CONTEXT.md')
         self.assertEqual(source.held_out, self.root / 'sources/held-out-glyphs.toml')
         self.assertIn('green', source.design()['colors'])
 

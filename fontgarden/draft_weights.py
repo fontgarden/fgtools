@@ -2,11 +2,11 @@
 """Draft the masters of more weights from two masters of the project.
 
 usage:
-  fgtools draft-weights            draft every weight of context.md
+  fgtools draft-weights            draft every weight of CONTEXT.md
   fgtools draft-weights Thin       draft the named weights
   fgtools draft-weights --build    also compile a variable font of all masters
 
-A weight is a table of context.md:
+A weight is a table of CONTEXT.md:
 
   [weights.Thin]
   wght = 100

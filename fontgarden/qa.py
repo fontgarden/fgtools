@@ -2,14 +2,14 @@
 """Run Fontspector with the Font.Garden profile on the built fonts.
 
     fgtools qa                    the built fonts, offline, without the checks
-                                  that context.md excludes
+                                  that CONTEXT.md excludes
     fgtools qa --full             the built fonts, all checks
     fgtools qa --package DIR      an assembled google/fonts package
 
 The profile includes the Google Fonts profile; see fontspector_plugin.py.
 Reports go to out/qa/<mode>/. A FAIL gives a failing exit status.
 
-A project lists its known development debt in context.md, each
+A project lists its known development debt in CONTEXT.md, each
 check with the reason it is excluded:
 
     [qa.exclude]

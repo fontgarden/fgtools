@@ -2,7 +2,7 @@
 """Check glyphs against the measurable design specification.
 
 The specification is the `targets` section of
-context.md. Runebender measures the glyphs
+CONTEXT.md. Runebender measures the glyphs
 (`runebender agent call analyze_glyph`); this script holds the Font.Garden
 policy. It reads the sources and never writes them.
 

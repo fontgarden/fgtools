@@ -108,7 +108,7 @@ def write_project(root):
     sources.mkdir(parents=True)
     (sources / 'config.yaml').write_text('sources:\n  - Test.designspace\noutputDir: ../fonts\n')
     (sources / 'Test.designspace').write_text(DESIGNSPACE)
-    (root / 'context.md').write_text(f'# Test rules\n\nR1. A rule.\n\n```toml\n{DESIGN}```\n')
+    (root / 'CONTEXT.md').write_text(f'# Test rules\n\nR1. A rule.\n\n```toml\n{DESIGN}```\n')
     (sources / 'held-out-glyphs.toml').write_text(HELD_OUT)
     for master in ('Regular', 'Bold'):
         ufo = sources / f'Test-{master}.ufo'
