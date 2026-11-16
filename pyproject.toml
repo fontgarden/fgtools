@@ -15,6 +15,7 @@ dependencies = [
     "diffenator3",
     "fontspectorapi",
     "fonttools",
+    "gftools",
     "numpy",
     "Pillow",
     "PyYAML",
