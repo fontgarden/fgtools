@@ -1,4 +1,4 @@
-"""Tests of fontgarden/accented_letters.py and fontgarden/accent_proofs.py."""
+"""Tests of fgtools/accented_letters.py and fgtools/accent_proofs.py."""
 import contextlib
 import io
 import json
@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fontgarden import accent_placement, accent_proofs, accented_letters, project
+from fgtools import accent_placement, accent_proofs, accented_letters, project
 from tests.test_accent_placement import write_font, write_ufo
 
 PURPLE_LIB = ('\t<lib>\n\t\t<dict>\n\t\t\t<key>public.markColor</key>\n'
@@ -156,7 +156,7 @@ class ProjectReferenceFonts(unittest.TestCase):
         import os
         import sys
         from unittest import mock
-        from fontgarden import reference_fonts
+        from fgtools import reference_fonts
         with tempfile.TemporaryDirectory() as temp:
             root = write_ufo(Path(temp) / 'font')
             (root / 'CONTEXT.md').write_text(

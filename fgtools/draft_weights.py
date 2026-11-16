@@ -38,8 +38,8 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from fontgarden import project
-from fontgarden.build_source_snapshot import tool_path
+from fgtools import project
+from fgtools.build_source_snapshot import tool_path
 
 OUTPUT = 'output/weights'
 PURPLE = '0.54,0.44,0.88,1'

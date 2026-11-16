@@ -36,7 +36,7 @@ from pathlib import Path
 
 from fontTools.pens.basePen import BasePen
 
-from fontgarden import project
+from fgtools import project
 
 # Combining mark: (side, code point of the spacing form). Fonts build
 # composites from either form.
@@ -467,5 +467,5 @@ def main_evaluate():
                         help='compiled TTF fonts (default: the shared reference fonts)')
     parser.add_argument('--letters', action='store_true', help='also list the error for each base letter')
     args = parser.parse_args()
-    from fontgarden import reference_fonts
+    from fgtools import reference_fonts
     return evaluate(args.fonts or reference_fonts.one_for_each_family(), args.letters)

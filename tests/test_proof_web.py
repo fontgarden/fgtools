@@ -1,4 +1,4 @@
-"""Tests of fontgarden.proof_web, with small fonts made by FontBuilder."""
+"""Tests of fgtools.proof_web, with small fonts made by FontBuilder."""
 import contextlib
 import hashlib
 import io
@@ -17,9 +17,9 @@ from urllib.request import urlopen
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 
-from fontgarden import project
-from fontgarden.proof_web import prepare, reference_fonts, render_detail, samples, serve
-from fontgarden.proof_web.reference_fonts import CACHE_GRACE_SECONDS, ReferenceCache, prune_reference_cache
+from fgtools import project
+from fgtools.proof_web import prepare, reference_fonts, render_detail, samples, serve
+from fgtools.proof_web.reference_fonts import CACHE_GRACE_SECONDS, ReferenceCache, prune_reference_cache
 
 from tests.fixture import working_directory, write_project  # noqa: E402
 

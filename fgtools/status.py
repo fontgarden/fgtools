@@ -15,7 +15,7 @@ import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from fontgarden import project
+from fgtools import project
 
 SCRIPTS = ['Arabic', 'Hebrew', 'Latin and other']
 

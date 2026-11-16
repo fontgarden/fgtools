@@ -31,9 +31,9 @@ from pathlib import Path
 
 from fontTools.ttLib import TTFont
 
-from fontgarden import project
-from fontgarden.proof_web import samples
-from fontgarden.proof_web.reference_fonts import FOLDER, ReferenceCache, collect, read_review_data
+from fgtools import project
+from fgtools.proof_web import samples
+from fgtools.proof_web.reference_fonts import FOLDER, ReferenceCache, collect, read_review_data
 
 APP = Path(__file__).with_name('app')
 APP_FILES = ['index.html', 'review.css', 'review.js', 'reference-selection.js']
@@ -152,7 +152,7 @@ def prepare_live(snapshot, target, source=None):
 
 def main(argv=None, prog=None):
     parser = argparse.ArgumentParser(prog=prog, description=__doc__.split('\n')[0],
-                                     epilog='The format of the manifest is in the docstring of fontgarden.proof_web.prepare.')
+                                     epilog='The format of the manifest is in the docstring of fgtools.proof_web.prepare.')
     parser.add_argument('--comparison', type=Path, required=True, help='the comparison file (JSON)')
     parser.add_argument('--output-dir', type=Path, required=True, help='the snapshot folder to write')
     parser.add_argument('--frozen-references', action='store_true',

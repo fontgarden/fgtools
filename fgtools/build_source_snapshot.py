@@ -32,7 +32,7 @@ from pathlib import Path
 
 import yaml
 
-from fontgarden import project
+from fgtools import project
 
 GLYPH_ORDER = re.compile(r'(<key>public.glyphOrder</key>\s*<array>)(.*?)(\n\t</array>)', re.S)
 # Build output that gftools writes into the sources folder.
@@ -46,7 +46,7 @@ def build_snapshot(config_path, output=None):
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text())
     source_root = config_path.parent
-    with tempfile.TemporaryDirectory(prefix='fontgarden-build-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='fgtools-build-') as temporary:
         target = (Path(temporary) / 'sources').resolve()
         shutil.copytree(source_root, target, ignore=shutil.ignore_patterns(*BUILD_FILES))
         for designspace in config['sources']:

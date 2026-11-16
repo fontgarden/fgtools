@@ -11,7 +11,7 @@ from pathlib import Path
 import plistlib
 import xml.etree.ElementTree as ET
 
-from fontgarden import project
+from fgtools import project
 
 
 def digest(path):

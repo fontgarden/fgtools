@@ -74,7 +74,7 @@ be the top level of its Git repository.
 | `fgtools evaluate-drafting prepare TASK RUN` | Copy the sources into `RUN/sources` and hide or move the held-out glyphs. `TASK` is `redraw`, `bold`, `repair` or `relatives`. |
 | `fgtools evaluate-drafting score RUN` | Score the drafts in `RUN` against the project sources. |
 | `fgtools evaluate-drafting compare RUN RUN` | Compare the scores of two runs. |
-| `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fontgarden/harnesses.toml`: Claude Code, Codex and OMP. |
+| `fgtools evaluate-drafting run TASK RUN --harness NAME [--model M] [--max-time S]` | Prepare `RUN`, run an agent harness in it without a person, record its time, exit status and cost, and score it. The harnesses and their permissions are in `fgtools/harnesses.toml`: Claude Code, Codex and OMP. |
 | `fgtools evaluate-drafting table RUN ...` | One line for each run: harness, model, task, overlap, distance, compatible glyphs, time and cost. |
 | `fgtools report-grid-levels [--master NAME] [--glyphs "NAMES"]` | Count the points on the 8-unit grid, on the 2-unit grid only, and off both, by script and mark color, with the advances and kerning values off the 8-unit grid. With `--glyphs`, list the points of each named glyph that are off the 8-unit grid. |
 | `fgtools check-accents [--master NAME] [--tolerance UNITS] [--all]` | List the accented letters whose mark is not where the other accented letters predict, or not where the anchors of its parts are. See [Accent placement](#accent-placement). |
@@ -95,33 +95,33 @@ be the top level of its Git repository.
 | `fgtools proof-web render-detail --text TEXT --weight N --output FILE` | A DesignBot PNG of one sample in each font of the proof. Needs the `designbot` command. |
 
 `fgtools COMMAND --help` lists the arguments of a command. Each command
-runs one module, so `python -m fontgarden.status --print` is the same as
+runs one module, so `python -m fgtools.status --print` is the same as
 `fgtools status --print`.
 
 | Module | Command |
 | --- | --- |
-| `fontgarden.status` | `status` |
-| `fontgarden.check_design` | `check-design`, `queue` |
-| `fontgarden.check_changes` | `check-changes` |
-| `fontgarden.glif_lint` | `lint-glifs` |
-| `fontgarden.curve_lint` | `lint-curves` |
-| `fontgarden.evaluate_drafting` | `evaluate-drafting` |
-| `fontgarden.draft_weights` | `draft-weights` |
-| `fontgarden.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
-| `fontgarden.grid_levels` | `report-grid-levels` |
-| `fontgarden.accent_placement` | `check-accents`, `evaluate-accent-placement` |
-| `fontgarden.accented_letters` | `place-anchors`, `build-accented-letters` |
-| `fontgarden.accent_proofs` | `render-accent-proofs` |
-| `fontgarden.reference_fonts` | `fetch-reference-fonts` |
-| `fontgarden.list_corrections` | `corrections` |
-| `fontgarden.build_source_snapshot` | `build` |
-| `fontgarden.qa`, `fontgarden.fontspector_plugin` | `qa` |
-| `fontgarden.diff` | `diff` |
-| `fontgarden.install_tools` | `install-tools` |
-| `fontgarden.customize` | `customize` |
-| `fontgarden.proof_web` | `proof-web`. The web app is in `fontgarden/proof_web/app/`. |
-| `fontgarden.source_inventory` | None. Other modules import it to read glyph records. |
-| `fontgarden.project` | None. It finds the project and reads its layout. |
+| `fgtools.status` | `status` |
+| `fgtools.check_design` | `check-design`, `queue` |
+| `fgtools.check_changes` | `check-changes` |
+| `fgtools.glif_lint` | `lint-glifs` |
+| `fgtools.curve_lint` | `lint-curves` |
+| `fgtools.evaluate_drafting` | `evaluate-drafting` |
+| `fgtools.draft_weights` | `draft-weights` |
+| `fgtools.benchmark` | `evaluate-drafting run`, `evaluate-drafting table` |
+| `fgtools.grid_levels` | `report-grid-levels` |
+| `fgtools.accent_placement` | `check-accents`, `evaluate-accent-placement` |
+| `fgtools.accented_letters` | `place-anchors`, `build-accented-letters` |
+| `fgtools.accent_proofs` | `render-accent-proofs` |
+| `fgtools.reference_fonts` | `fetch-reference-fonts` |
+| `fgtools.list_corrections` | `corrections` |
+| `fgtools.build_source_snapshot` | `build` |
+| `fgtools.qa`, `fgtools.fontspector_plugin` | `qa` |
+| `fgtools.diff` | `diff` |
+| `fgtools.install_tools` | `install-tools` |
+| `fgtools.customize` | `customize` |
+| `fgtools.proof_web` | `proof-web`. The web app is in `fgtools/proof_web/app/`. |
+| `fgtools.source_inventory` | None. Other modules import it to read glyph records. |
+| `fgtools.project` | None. It finds the project and reads its layout. |
 
 ## Accent placement
 
@@ -166,7 +166,7 @@ Three commands do the work on accented letters, and a review closes it:
    in the sources, as a purple composite at the offset
    `anchor of the base - anchor of the mark`, in every master, and adds it to
    `contents.plist` and `public.glyphOrder`. The sets are in
-   `fontgarden/accented_letters.toml`. The default, `google-fonts-latin-core`,
+   `fgtools/accented_letters.toml`. The default, `google-fonts-latin-core`,
    has the 145 accented letters of the Google Fonts Latin Core glyph set.
    `--replace-drafts` also sets the components of the purple accented
    letters again. The command lists the letters that it does not build:
@@ -205,7 +205,7 @@ One shared collection of OFL fonts serves every comparison and measurement:
 the accent placement evaluation, proofs and checks. It is not a source of
 outlines. Set `FONTGARDEN_REFERENCE_FONTS` to its directory, then run
 `fgtools fetch-reference-fonts`. The command downloads the families of
-`fontgarden/reference_fonts.toml` from https://github.com/google/fonts. That
+`fgtools/reference_fonts.toml` from https://github.com/google/fonts. That
 file is the trusted list: each family has the reason that it is a reference,
 and the designer decides which families it holds. Each family goes into `<directory>/<family>/` with its
 `OFL.txt`. A family with variable fonts gets those. Another family gets its
@@ -255,12 +255,12 @@ paths and hashes of fixed font files, run `proof-web prepare`, then
 `proof-web --snapshot DIR`. The command remembers the snapshot, and
 `proof-web` without a mode serves it again. If a Before or Candidate font is
 missing, stop. Do not use the current build in its place. The manifest
-format is in the docstring of `fontgarden/proof_web/prepare.py`.
+format is in the docstring of `fgtools/proof_web/prepare.py`.
 
 ### Samples
 
 The package has default samples for Latin, Hebrew and Arabic in
-`fontgarden/proof_web/samples.toml`. The proof uses a sample only when the
+`fgtools/proof_web/samples.toml`. The proof uses a sample only when the
 font has at least half of the basic letters of each script in its `scripts`.
 `sources/proof-samples.toml` adds samples. A sample with the key of a
 default sample replaces it. `defaults = false` removes all default samples.

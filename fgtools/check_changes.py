@@ -46,9 +46,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from fontgarden import check_design
-from fontgarden import project
-from fontgarden import source_inventory as inventory
+from fgtools import check_design
+from fgtools import project
+from fgtools import source_inventory as inventory
 
 HARD = ('off the 2-unit grid', 'structure differs', 'component lists differ', 'does not resolve')
 
@@ -184,7 +184,7 @@ def main():
             if not record['contours'] and color == 'green' and was != 'green':
                 if ready is None:
                     ready = set(subprocess.run(
-                        [sys.executable, '-m', 'fontgarden.check_design', '--ready'],
+                        [sys.executable, '-m', 'fgtools.check_design', '--ready'],
                         cwd=root, capture_output=True, text=True).stdout.split())
                 if name not in ready:
                     errors.append(f'{label}: marked green but fgtools check-design --ready does not list it')
@@ -200,7 +200,7 @@ def main():
             (errors if any(h in finding for h in HARD) else notes).append(f'{name}: {finding}')
 
     if names:
-        lint = subprocess.run([sys.executable, '-m', 'fontgarden.glif_lint', *names],
+        lint = subprocess.run([sys.executable, '-m', 'fgtools.glif_lint', *names],
                               cwd=root, capture_output=True, text=True)
         if lint.returncode:
             errors += [f'lint-glifs: {line.strip()}' for line in lint.stdout.splitlines()

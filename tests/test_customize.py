@@ -1,10 +1,10 @@
-"""Tests of fontgarden/customize.py."""
+"""Tests of fgtools/customize.py."""
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from fontgarden import customize
+from fgtools import customize
 
 
 class Customize(unittest.TestCase):

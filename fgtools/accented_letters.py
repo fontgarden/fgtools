@@ -46,9 +46,9 @@ from pathlib import Path
 
 from fontTools.ufoLib.filenames import userNameToFileName
 
-from fontgarden import project
-from fontgarden.accent_placement import CARON_BESIDE, DOTLESS, LINE_TOLERANCE, MARKS, Font, observations
-from fontgarden.status import color_name
+from fgtools import project
+from fgtools.accent_placement import CARON_BESIDE, DOTLESS, LINE_TOLERANCE, MARKS, Font, observations
+from fgtools.status import color_name
 
 SETS = Path(__file__).with_name('accented_letters.toml')
 DEFAULT_SET = 'google-fonts-latin-core'

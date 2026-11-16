@@ -20,7 +20,7 @@ SUBCOMMANDS = {'prepare': 'prepare', 'render-detail': 'render_detail'}
 def main():
     prog, *argv = sys.argv
     if argv and argv[0] in SUBCOMMANDS:
-        module = importlib.import_module(f'fontgarden.proof_web.{SUBCOMMANDS[argv[0]]}')
+        module = importlib.import_module(f'fgtools.proof_web.{SUBCOMMANDS[argv[0]]}')
         return module.main(argv[1:], prog=f'{prog} {argv[0]}')
-    from fontgarden.proof_web.serve import main as serve
+    from fgtools.proof_web.serve import main as serve
     return serve(argv, prog=prog)

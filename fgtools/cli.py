@@ -1,6 +1,6 @@
 """The `fgtools` command. Each subcommand runs the main() of one module
 with the remaining arguments, so `fgtools status --print` is the same as
-`python -m fontgarden.status --print`.
+`python -m fgtools.status --print`.
 
 The commands find the project from the current directory: the current
 directory or the nearest parent that contains sources/config.yaml.
@@ -10,7 +10,7 @@ from __future__ import annotations
 import importlib
 import sys
 
-from fontgarden.project import ProjectError
+from fgtools.project import ProjectError
 
 # Subcommand: (module, arguments put before the user's arguments, description).
 # A module name with a colon names the function to run in place of main().
@@ -69,7 +69,7 @@ def main(argv=None):
     sys.argv = [f'fgtools {name}', *before, *rest]
     try:
         module, _, function = module.partition(':')
-        return getattr(importlib.import_module(f'fontgarden.{module}'), function or 'main')() or 0
+        return getattr(importlib.import_module(f'fgtools.{module}'), function or 'main')() or 0
     except ProjectError as error:
         print(f'fgtools: {error}', file=sys.stderr)
         return 1

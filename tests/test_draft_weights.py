@@ -1,4 +1,4 @@
-"""Tests of fontgarden/draft_weights.py on a small project."""
+"""Tests of fgtools/draft_weights.py on a small project."""
 import contextlib
 import io
 import tempfile
@@ -6,8 +6,8 @@ import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from fontgarden import cli
-from fontgarden import draft_weights
+from fgtools import cli
+from fgtools import draft_weights
 from tests import fixture
 
 WEIGHTS = '''

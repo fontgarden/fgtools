@@ -51,11 +51,11 @@ from fontTools.pens.pointPen import PointToSegmentPen
 from fontTools.ufoLib.glifLib import readGlyphFromString
 from PIL import Image, ImageChops, ImageDraw
 
-from fontgarden import benchmark
-from fontgarden import check_design
-from fontgarden import project
-from fontgarden import source_inventory
-from fontgarden.curve_lint import lint_glyph
+from fgtools import benchmark
+from fgtools import check_design
+from fgtools import project
+from fgtools import source_inventory
+from fgtools.curve_lint import lint_glyph
 
 TASKS = ['redraw', 'bold', 'repair', 'relatives']
 RED = '1,0,0,1'

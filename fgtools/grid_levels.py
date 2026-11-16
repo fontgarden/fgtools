@@ -19,10 +19,10 @@ import plistlib
 import sys
 from collections import defaultdict
 
-from fontgarden import project
-from fontgarden import source_inventory as inventory
-from fontgarden.check_changes import POINT
-from fontgarden.status import script_of
+from fgtools import project
+from fgtools import source_inventory as inventory
+from fgtools.check_changes import POINT
+from fgtools.status import script_of
 
 
 def level(value, coarse, fine):

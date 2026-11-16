@@ -1,13 +1,13 @@
-"""Tests of fontgarden/status.py and fontgarden/glif_lint.py on a small project."""
+"""Tests of fgtools/status.py and fgtools/glif_lint.py on a small project."""
 import contextlib
 import io
 import tempfile
 import unittest
 from pathlib import Path
 
-from fontgarden import cli
-from fontgarden import glif_lint
-from fontgarden import status
+from fgtools import cli
+from fgtools import glif_lint
+from fgtools import status
 from tests import fixture
 
 

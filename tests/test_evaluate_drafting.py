@@ -1,4 +1,4 @@
-"""Tests of the scores and the task preparation in fontgarden/evaluate_drafting.py."""
+"""Tests of the scores and the task preparation in fgtools/evaluate_drafting.py."""
 import contextlib
 import io
 import json
@@ -8,9 +8,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from fontgarden import check_design
-from fontgarden import evaluate_drafting as evaluation
-from fontgarden import project
+from fgtools import check_design
+from fgtools import evaluate_drafting as evaluation
+from fgtools import project
 from tests import fixture
 
 SQUARE = [(0, 0), (100, 0), (100, 100), (0, 100)]

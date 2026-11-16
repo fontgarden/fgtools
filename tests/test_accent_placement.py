@@ -1,4 +1,4 @@
-"""Tests of fontgarden/accent_placement.py on a small UFO and a small compiled font."""
+"""Tests of fgtools/accent_placement.py on a small UFO and a small compiled font."""
 import contextlib
 import io
 import plistlib
@@ -9,7 +9,7 @@ from pathlib import Path
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.ttGlyphPen import TTGlyphPen
 
-from fontgarden import accent_placement
+from fgtools import accent_placement
 
 # Base letter: (code point, left, right, top). Each is a box on the baseline.
 BASES = {'x': (0x78, 0, 100, 500), 'H': (0x48, 0, 140, 700), 'l': (0x6C, 0, 40, 750),
@@ -153,7 +153,7 @@ class AccentPlacement(unittest.TestCase):
 
 class ReferenceFonts(unittest.TestCase):
     def test_one_upright_font_is_chosen_for_each_family(self):
-        from fontgarden import reference_fonts
+        from fgtools import reference_fonts
         with tempfile.TemporaryDirectory() as temp:
             for name in ('inter/Inter[wght].ttf', 'inter/Inter-Italic[wght].ttf',
                          'poppins/Poppins-Bold.ttf', 'poppins/Poppins-Regular.ttf',
@@ -166,7 +166,7 @@ class ReferenceFonts(unittest.TestCase):
             self.assertEqual(len(reference_fonts.fonts(temp, italic=True)), 5)
 
     def test_each_trusted_family_has_a_reason(self):
-        from fontgarden import reference_fonts
+        from fgtools import reference_fonts
         families = reference_fonts.families()
         self.assertTrue(families)
         for family, reason in families.items():

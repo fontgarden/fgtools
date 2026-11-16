@@ -43,8 +43,8 @@ import sys
 import unicodedata
 from pathlib import Path
 
-from fontgarden import project, reference_fonts
-from fontgarden.accent_placement import (Font, anchor_position, calibrated_position, observations)
+from fgtools import project, reference_fonts
+from fgtools.accent_placement import (Font, anchor_position, calibrated_position, observations)
 
 MARGIN = 0.04          # how far outside the reference range a value can be
 MINIMUM_FONTS = 3      # a range needs this number of reference fonts

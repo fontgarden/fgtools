@@ -1,10 +1,10 @@
-"""Tests of the review classification in fontgarden/list_corrections.py."""
+"""Tests of the review classification in fgtools/list_corrections.py."""
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from fontgarden import list_corrections as corrections
+from fgtools import list_corrections as corrections
 from tests import fixture
 from tests.fixture import GREEN, ORANGE, PURPLE, YELLOW
 

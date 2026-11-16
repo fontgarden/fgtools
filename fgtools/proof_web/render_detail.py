@@ -20,7 +20,7 @@ from pathlib import Path
 
 from fontTools.ttLib import TTFont
 
-from fontgarden import project
+from fgtools import project
 
 RECIPE = Path(__file__).with_name('render_detail.rs')
 # Joining controls are shaping instructions, not visible characters.

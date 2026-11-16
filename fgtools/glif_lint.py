@@ -21,7 +21,7 @@ import plistlib
 import sys
 import xml.etree.ElementTree as ET
 
-from fontgarden import project
+from fgtools import project
 
 
 def contents(ufo):

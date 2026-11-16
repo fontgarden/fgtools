@@ -29,8 +29,8 @@ from urllib.request import urlopen
 
 from fontTools.ttLib import TTFont
 
-from fontgarden import project
-from fontgarden.proof_web.prepare import prepare, prepare_live
+from fgtools import project
+from fgtools.proof_web.prepare import prepare, prepare_live
 
 OUTPUT = 'output/proof-web'
 SELECTION = f'{OUTPUT}/selection.json'

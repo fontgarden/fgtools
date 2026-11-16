@@ -15,7 +15,7 @@
 """
 import argparse, math, plistlib, re
 
-from fontgarden import project
+from fgtools import project
 
 TOL_CREST = 6
 TENSION_RATIO = 2.6

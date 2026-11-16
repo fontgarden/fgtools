@@ -39,8 +39,8 @@ import re
 import subprocess
 import sys
 
-from fontgarden import evaluate_drafting as evaluation
-from fontgarden import project
+from fgtools import evaluate_drafting as evaluation
+from fgtools import project
 
 MARK = re.compile(r'<key>public.markColor</key>\s*<string>([^<]*)</string>')
 HASH = re.compile(r'\b[0-9a-f]{7,40}\b')

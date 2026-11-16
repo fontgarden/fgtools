@@ -21,11 +21,11 @@ dependencies = [
 ]
 
 [project.scripts]
-fgtools = "fontgarden.cli:main"
+fgtools = "fgtools.cli:main"
 
 [tool.setuptools]
-packages = ["fontgarden", "fontgarden.proof_web"]
+packages = ["fgtools", "fgtools.proof_web"]
 
 [tool.setuptools.package-data]
-"fontgarden" = ["accented_letters.toml", "harnesses.toml", "reference_fonts.toml"]
-"fontgarden.proof_web" = ["samples.toml", "render_detail.rs", "app/*"]
+"fgtools" = ["accented_letters.toml", "harnesses.toml", "reference_fonts.toml"]
+"fgtools.proof_web" = ["samples.toml", "render_detail.rs", "app/*"]

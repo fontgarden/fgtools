@@ -1,10 +1,10 @@
-"""Tests of the curvature and join measurements in fontgarden/curve_lint.py."""
+"""Tests of the curvature and join measurements in fgtools/curve_lint.py."""
 import math
 from pathlib import Path
 import tempfile
 import unittest
 
-from fontgarden.curve_lint import all_segments, inflections, join_audit, lint_glyph, parse, signed_curvature
+from fgtools.curve_lint import all_segments, inflections, join_audit, lint_glyph, parse, signed_curvature
 
 KAPPA = 276  # Handle length of a quarter circle with radius 500.
 

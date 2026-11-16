@@ -1,7 +1,7 @@
-"""Tests of the stroke and component measurements in fontgarden/check_design.py."""
+"""Tests of the stroke and component measurements in fgtools/check_design.py."""
 import unittest
 
-from fontgarden import check_design
+from fgtools import check_design
 
 
 class CheckDesign(unittest.TestCase):
@@ -25,19 +25,19 @@ class CheckDesign(unittest.TestCase):
 
 
     def test_only_new_points_off_the_draft_grid_are_listed(self):
-        from fontgarden.check_changes import new_points_off_grid
+        from fgtools.check_changes import new_points_off_grid
         base = '<point x="98" y="0" type="line"/>'
         text = base + '<point x="104" y="64"/><point x="130" y="8" type="curve"/><point x="16" y="-3"/>'
         self.assertEqual(new_points_off_grid(text, base, 8), [(16.0, -3.0), (130.0, 8.0)])
         self.assertEqual(new_points_off_grid(text, text, 8), [])
 
     def test_grid_levels(self):
-        from fontgarden.grid_levels import level
+        from fgtools.grid_levels import level
         self.assertEqual([level(value, 8, 2) for value in (96, 98, 99, -16, -6)], [0, 1, 2, 0, 1])
 
 
     def test_a_combining_mark_has_no_stroke_target(self):
-        from fontgarden.check_design import script_of
+        from fgtools.check_design import script_of
         self.assertEqual(script_of('dagesh-hb', {'unicodes': [0x05BC]}), 'Symbol')
         self.assertEqual(script_of('fatha-ar', {'unicodes': [0x064E]}), 'Symbol')
         self.assertEqual(script_of('he-hb', {'unicodes': [0x05D4]}), 'Hebrew')

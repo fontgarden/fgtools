@@ -6,7 +6,7 @@
 
 The collection is for comparison and measurement: the accent placement
 evaluation, proofs and checks. It is not a source of outlines. Each family
-of fontgarden/reference_fonts.toml, the trusted list,
+of fgtools/reference_fonts.toml, the trusted list,
 goes to DIRECTORY/<family>/ with its OFL.txt, under the file names of
 https://github.com/google/fonts. A family with variable fonts gets those;
 another family gets its Regular, Italic, Bold and Bold Italic.
@@ -133,7 +133,7 @@ def fetch(target, family, italic=True):
 
 def project_families(root=None):
     """(the reference-fonts folder of the project, {family: reason})."""
-    from fontgarden import project
+    from fgtools import project
     source = project.load(root)
     design = source.design() if source.design_config.is_file() else {}
     return source.root / FOLDER, design.get('reference_fonts', {}).get('families', {})

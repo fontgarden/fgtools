@@ -1,10 +1,10 @@
-"""Tests of the project layout in fontgarden/project.py."""
+"""Tests of the project layout in fgtools/project.py."""
 import os
 import tempfile
 import unittest
 from pathlib import Path
 
-from fontgarden import project
+from fgtools import project
 from tests import fixture
 
 

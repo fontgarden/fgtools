@@ -1,9 +1,9 @@
-"""Tests of the summary in fontgarden/diff.py and the pins in install_tools.py."""
+"""Tests of the summary in fgtools/diff.py and the pins in install_tools.py."""
 import re
 import unittest
 
-from fontgarden.diff import summary
-from fontgarden.install_tools import TOOLS
+from fgtools.diff import summary
+from fgtools.install_tools import TOOLS
 
 
 class DiffSummary(unittest.TestCase):

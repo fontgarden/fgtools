@@ -1,4 +1,4 @@
-"""Tests of fontgarden/build_source_snapshot.py.
+"""Tests of fgtools/build_source_snapshot.py.
 
 The build copies the sources to a temporary folder and gives every master the
 glyph order of the first master. The sources themselves must not change.
@@ -8,7 +8,7 @@ import plistlib
 import tempfile
 import unittest
 
-from fontgarden.build_source_snapshot import build_snapshot
+from fgtools.build_source_snapshot import build_snapshot
 
 
 def write_sources(folder):

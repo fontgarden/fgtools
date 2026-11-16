@@ -59,7 +59,7 @@ def cost(harness, output):
 
 
 def run(task, run_dir, harness, model=None, max_time=3600):
-    from fontgarden import evaluate_drafting
+    from fgtools import evaluate_drafting
     if harness not in HARNESSES:
         sys.exit(f'Unknown harness {harness}. Known: {", ".join(HARNESSES)}.')
     run_dir = Path(run_dir).resolve()

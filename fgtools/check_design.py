@@ -31,8 +31,8 @@ import sys
 import unicodedata
 from pathlib import Path
 
-from fontgarden import project
-from fontgarden import source_inventory as inventory
+from fgtools import project
+from fgtools import source_inventory as inventory
 
 
 def cache_dir():

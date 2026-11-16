@@ -26,7 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from fontgarden import project
+from fgtools import project
 
 FAMILY, FILE, SLUG = 'Font Garden Template', 'FontGardenTemplate', 'font-project-template'
 URL = f'https://github.com/fontgarden/{SLUG}'

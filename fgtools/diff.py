@@ -31,8 +31,8 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from fontgarden import project
-from fontgarden.build_source_snapshot import build_fonts, tool_path
+from fgtools import project
+from fgtools.build_source_snapshot import build_fonts, tool_path
 
 
 def sources_at(revision, root, target):
@@ -91,7 +91,7 @@ def main():
     side.add_argument('--fontmake', action='store_true', help='compare fontc with fontmake')
     args = parser.parse_args()
     source = project.load()
-    with tempfile.TemporaryDirectory(prefix='fontgarden-diff-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='fgtools-diff-') as temporary:
         temporary = Path(temporary)
         if args.fontmake:
             labels = ('fontmake', 'fontc')

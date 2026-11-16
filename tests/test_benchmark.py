@@ -2,8 +2,8 @@
 import json
 import unittest
 
-from fontgarden import benchmark
-from fontgarden.evaluate_drafting import brief
+from fgtools import benchmark
+from fgtools.evaluate_drafting import brief
 
 
 class HarnessCommands(unittest.TestCase):

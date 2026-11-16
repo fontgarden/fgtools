@@ -28,9 +28,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-from fontgarden import project
+from fgtools import project
 
-PLUGIN = '#!{python}\nimport sys\nfrom fontgarden.fontspector_plugin import main\nsys.exit(main())\n'
+PLUGIN = '#!{python}\nimport sys\nfrom fgtools.fontspector_plugin import main\nsys.exit(main())\n'
 
 
 def main():
@@ -58,7 +58,7 @@ def main():
         sys.exit(f'Missing: {", ".join(missing)}')
     reports = source.root / 'output/qa' / name
     reports.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix='fontgarden-qa-') as temporary:
+    with tempfile.TemporaryDirectory(prefix='fgtools-qa-') as temporary:
         plugin = Path(temporary) / 'fontgarden-fontspectorplugin'
         plugin.write_text(PLUGIN.format(python=sys.executable))
         plugin.chmod(0o755)
