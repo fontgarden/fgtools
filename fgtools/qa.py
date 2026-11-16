@@ -71,7 +71,8 @@ def main():
             command.append('--skip-network')
         command += ['--json', str(reports / 'fontspector.json'),
                     '--ghmarkdown', str(reports / 'fontspector.md'), *map(str, inputs)]
-        return subprocess.run(command, env=dict(os.environ, PATH=path)).returncode
+        environment = dict(os.environ, PATH=path, FGTOOLS_PROJECT=str(source.root))
+        return subprocess.run(command, env=environment).returncode
 
 
 if __name__ == '__main__':

@@ -86,7 +86,8 @@ be the top level of its Git repository.
 | `fgtools draft-weights [NAME ...] [--build]` | Draft the masters of more weights, for example Thin and Black, from two masters. Each `[weights.<name>]` table of `CONTEXT.md` names the two masters and gives the vertical stem and the horizontal stroke of each master and of the weight. Each coordinate is calculated on the line through its two values, with one position for x and one for y. The drafts go to `output/weights/` with a designspace of all masters, every drafted glyph is purple, and `sources/` does not change. The report lists the glyphs that are not compatible in the two masters and the glyphs with a contour that turned inside out. `--build` compiles a variable font with fontc. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
-| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
+| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `scripts/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
+| `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `output/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
@@ -115,7 +116,8 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.reference_fonts` | `fetch-reference-fonts` |
 | `fgtools.list_corrections` | `corrections` |
 | `fgtools.build_source_snapshot` | `build` |
-| `fgtools.qa`, `fgtools.fontspector_plugin` | `qa` |
+| `fgtools.qa`, `fgtools.fontspector_plugin`, `fgtools.shaped_font` | `qa` |
+| `fgtools.check_repository` | `check-repository` |
 | `fgtools.diff` | `diff` |
 | `fgtools.install_tools` | `install-tools` |
 | `fgtools.customize` | `customize` |

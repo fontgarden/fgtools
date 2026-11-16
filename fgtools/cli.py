@@ -39,6 +39,7 @@ COMMANDS = {
     'corrections': ('list_corrections', [], 'List the reviews of purple drafts from the Git history'),
     'build': ('build_source_snapshot', [], 'Build the fonts from a copy of the sources'),
     'qa': ('qa', [], 'Run Fontspector with the Font.Garden profile on the built fonts'),
+    'check-repository': ('check_repository', [], 'Check the file layout and the references of the documents'),
     'diff': ('diff', [], 'Compare two builds with diffenator3'),
     'proof-web': ('proof_web', [], 'Serve the font beside reference-fonts/ in a browser'),
     'customize': ('customize', [], 'Rename a project made from the Font.Garden project template'),
