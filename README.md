@@ -1,4 +1,4 @@
-# fontgarden-tools
+# fgtools
 
 Source tools for the Font.Garden font projects. The tools read the UFO
 masters of a project, report their mark colors, check glyphs against the
@@ -24,7 +24,7 @@ The package needs Python 3.13 or later. Install it into the virtual
 environment of the font project:
 
 ```sh
-.venv/bin/python -m pip install -e /path/to/fontgarden-tools
+.venv/bin/python -m pip install -e /path/to/fgtools
 .venv/bin/fgtools install-tools
 ```
 

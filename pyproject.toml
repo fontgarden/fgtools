@@ -3,7 +3,7 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fontgarden-tools"
+name = "fgtools"
 version = "0.1.0"
 description = "Source tools shared by the Font.Garden font projects"
 readme = "README.md"

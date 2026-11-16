@@ -80,7 +80,7 @@ def one_for_each_family(value=None):
 
 
 def request(url):
-    headers = {'User-Agent': 'fontgarden-tools'}
+    headers = {'User-Agent': 'fgtools'}
     if os.environ.get('GITHUB_TOKEN'):
         headers['Authorization'] = 'Bearer ' + os.environ['GITHUB_TOKEN']
     with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60) as response:

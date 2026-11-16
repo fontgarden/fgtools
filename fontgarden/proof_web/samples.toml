@@ -1,7 +1,7 @@
 # The default text samples of `fgtools proof-web`.
 #
 # A project adds samples, or replaces a sample with the same key, in
-# sources/proof-samples.toml. The format is in the README of fontgarden-tools.
+# sources/proof-samples.toml. The format is in the README of fgtools.
 #
 # Arabic joining samples: for a dual-joining letter, repeat the letter in
 # normal text, for example "ببب ب", to show the initial, medial, final and
