@@ -17,7 +17,7 @@ variable. A family that is already present is not downloaded again.
 
 With --project, the command gets the reference fonts of one font project.
 The families are the keys of `[reference_fonts.families]` in
-sources/design.toml, each with the reason that it is a reference. They go
+context.md, each with the reason that it is a reference. They go
 to the folder reference-fonts/ of the project, which Git ignores. The web
 proof and Runebender read that folder. Italic fonts are left out.
 
@@ -146,13 +146,13 @@ def main():
     parser.add_argument('--family', action='append',
                         help='a directory name in google/fonts/ofl (default: the families of reference_fonts.toml)')
     parser.add_argument('--project', action='store_true',
-                        help='get the families of sources/design.toml into reference-fonts/ of the project')
+                        help='get the families of context.md into reference-fonts/ of the project')
     args = parser.parse_args()
     status = 0
     if args.project:
         target, listed = project_families()
         if not listed and not args.family:
-            sys.exit('sources/design.toml names no family in [reference_fonts.families].')
+            sys.exit('context.md names no family in [reference_fonts.families].')
     else:
         target, listed = directory(args.directory), families()
     for family in args.family or listed:
@@ -166,7 +166,7 @@ def main():
         extra = sorted(path.name for path in target.iterdir()
                        if path.name not in listed and not path.name.startswith('.'))
         if extra:
-            print('Not in sources/design.toml: ' + ', '.join(extra))
+            print('Not in context.md: ' + ', '.join(extra))
     print(f'{len(fonts(target, italic=True))} fonts in {target}')
     return status
 

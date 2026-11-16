@@ -32,8 +32,8 @@ class DraftWeights(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = fixture.write_project(Path(self.temp.name) / 'font')
-        design = self.root / 'sources/design.toml'
-        design.write_text(design.read_text() + WEIGHTS)
+        design = self.root / 'context.md'
+        design.write_text(design.read_text() + f'\nR2. The weights.\n\n```toml\n{WEIGHTS}```\n')
 
     def tearDown(self):
         self.temp.cleanup()

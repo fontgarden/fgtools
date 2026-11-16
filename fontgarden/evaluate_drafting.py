@@ -264,7 +264,7 @@ RULES = """## Rules
 - Write each glyph in the existing GLIF style. Keep the contours, the point
   types and the components of a glyph the same in every master.
 - Put every point on the 2-unit grid. Put structural points on the 8-unit
-  grid. sources/design.toml gives the grid and the stroke targets.
+  grid. context.md gives the design rules, the grid and the stroke targets.
 - Set an advance width for each glyph you draw.
 - `fgtools lint-glifs` and `fgtools lint-curves MASTER GLYPH --joins` check
   your work from this directory.
@@ -290,11 +290,11 @@ def prepare(task, run, root=None):
         shutil.copytree(source.ufo(master), source.ufo(master, run))
     if source.designspace:
         shutil.copy(source.designspace, run / source.designspace.relative_to(source.root))
-    # config.yaml and design.toml make the copy a project for the fgtools
-    # commands, and give the method the grid and the stroke targets.
-    for name in ('config.yaml', 'design.toml'):
-        if (source.sources / name).exists():
-            shutil.copy(source.sources / name, sources / name)
+    # config.yaml and context.md make the copy a project for the fgtools
+    # commands, and give the method the design rules and their values.
+    shutil.copy(source.config_path, sources / source.config_path.name)
+    if source.design_config.exists():
+        shutil.copy(source.design_config, run / source.design_config.name)
     rows = cases(task, root)
     for row in rows:
         for master in row['changed']:

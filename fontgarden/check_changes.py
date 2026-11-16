@@ -30,7 +30,7 @@ It also prints the other design check findings (stroke ranges, kinks) for each
 changed glyph. Those are for review and do not fail the check.
 
 For a changed purple glyph it prints the new points that are off the grid of
-machine drafts (`grid.machine_draft` of sources/design.toml, 8 units). A
+machine drafts (`grid.machine_draft` of context.md, 8 units). A
 point that the base revision has is not new. A new point off that grid needs
 a reason: a stroke value of the designer, or a derived point.
 

@@ -17,7 +17,7 @@ from fontgarden.project import ProjectError
 COMMANDS = {
     'status': ('status', [], 'Write STATUS.md from the mark colors of the masters'),
     'queue': ('check_design', ['--queue'], 'Rank the glyphs that most composites wait on'),
-    'check-design': ('check_design', [], 'Check glyphs against sources/design.toml'),
+    'check-design': ('check_design', [], 'Check glyphs against context.md'),
     'check-changes': ('check_changes', [], 'Check source changes against a base revision'),
     'report-grid-levels': ('grid_levels', [],
                            'Count the points, advances and kerning at each level of the grid'),

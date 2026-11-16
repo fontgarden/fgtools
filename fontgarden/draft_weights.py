@@ -2,11 +2,11 @@
 """Draft the masters of more weights from two masters of the project.
 
 usage:
-  fgtools draft-weights            draft every weight of sources/design.toml
+  fgtools draft-weights            draft every weight of context.md
   fgtools draft-weights Thin       draft the named weights
   fgtools draft-weights --build    also compile a variable font of all masters
 
-A weight is a table of sources/design.toml:
+A weight is a table of context.md:
 
   [weights.Thin]
   wght = 100

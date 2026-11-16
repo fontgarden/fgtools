@@ -44,7 +44,7 @@ parent that contains that file. The tools read these files:
 | --- | --- |
 | `sources/config.yaml` | `sources` names the designspace. `outputDir` is the fonts directory. Both are relative to `sources/`. |
 | The designspace | The masters are its `<source>` elements, in order. |
-| `sources/design.toml` | Grid, stroke targets (`targets`), the weights that `draft-weights` drafts (`weights`), mark colors (`colors`) and the first date that `corrections` lists (`[corrections] start`). |
+| `context.md` | The design rules of the font. The tools read its `toml` code blocks as one TOML document: grid, stroke targets (`targets`), the weights that `draft-weights` drafts (`weights`), mark colors (`colors`) and the first date that `corrections` lists (`[corrections] start`). |
 | `sources/held-out-glyphs.toml` | The cases of `evaluate-drafting`. |
 | `sources/proof-samples.toml` | Optional. The text samples of `proof-web`. |
 | `reference-fonts/` | The TTF and OTF files that `proof-web` shows beside the font. Keep the license of each font with it, and keep the folder out of Git. |
@@ -82,11 +82,11 @@ be the top level of its Git repository.
 | `fgtools build-accented-letters [--set NAME] [--characters TEXT] [--glyphs "NAMES"] [--replace-drafts] [--write]` | Add the accented letters of a set as purple composites, in every master. |
 | `fgtools render-accent-proofs [--master NAME] [--glyphs "NAMES"] [--references DIR] [--out DIR]` | Draw each accented letter beside the reference fonts, and measure it against them. |
 | `fgtools evaluate-accent-placement [FONT.ttf ...] [--letters]` | Test the accent placement methods on compiled fonts, where the positions of the designer are known. Without fonts, it uses one upright font of each family of the [reference fonts](#reference-fonts). |
-| `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. With `--project`, get the families that `sources/design.toml` lists into `reference-fonts/` of the project. |
-| `fgtools draft-weights [NAME ...] [--build]` | Draft the masters of more weights, for example Thin and Black, from two masters. Each `[weights.<name>]` table of `sources/design.toml` names the two masters and gives the vertical stem and the horizontal stroke of each master and of the weight. Each coordinate is calculated on the line through its two values, with one position for x and one for y. The drafts go to `out/weights/` with a designspace of all masters, every drafted glyph is purple, and `sources/` does not change. The report lists the glyphs that are not compatible in the two masters and the glyphs with a contour that turned inside out. `--build` compiles a variable font with fontc. |
+| `fgtools fetch-reference-fonts [DIRECTORY] [--family NAME ...]` | Download the shared OFL reference fonts from Google Fonts. With `--project`, get the families that `context.md` lists into `reference-fonts/` of the project. |
+| `fgtools draft-weights [NAME ...] [--build]` | Draft the masters of more weights, for example Thin and Black, from two masters. Each `[weights.<name>]` table of `context.md` names the two masters and gives the vertical stem and the horizontal stroke of each master and of the weight. Each coordinate is calculated on the line through its two values, with one position for x and one for y. The drafts go to `out/weights/` with a designspace of all masters, every drafted glyph is purple, and `sources/` does not change. The report lists the glyphs that are not compatible in the two masters and the glyphs with a contour that turned inside out. `--build` compiles a variable font with fontc. |
 | `fgtools corrections [--all]` | List the reviews of purple drafts from the Git history. |
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
-| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `sources/design.toml`. Reports go to `out/qa/`. |
+| `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the em size, grid, vendor ID and license checks) on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `context.md`. Reports go to `out/qa/`. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `out/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
 | `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
@@ -214,7 +214,7 @@ downloaded again, and `--family NAME` adds a family of `google/fonts/ofl`.
 
 ### Reference fonts of a project
 
-Each project names its own reference families in `sources/design.toml`:
+Each project names its own reference families in `context.md`:
 
 ```toml
 [reference_fonts.families]
@@ -230,7 +230,7 @@ reason that the family is a reference. `fgtools fetch-reference-fonts
 ignores that folder. `proof-web` and Runebender read it. A family comes from
 the first place that has it: the shared collection, a local clone of
 google/fonts that `FONTGARDEN_GOOGLE_FONTS` names, or a download from GitHub.
-The command lists the folders that `design.toml` does not name, and does not
+The command lists the folders that `context.md` does not name, and does not
 remove them.
 
 ## Web proof

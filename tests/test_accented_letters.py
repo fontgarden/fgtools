@@ -159,8 +159,8 @@ class ProjectReferenceFonts(unittest.TestCase):
         from fontgarden import reference_fonts
         with tempfile.TemporaryDirectory() as temp:
             root = write_ufo(Path(temp) / 'font')
-            (root / 'sources/design.toml').write_text(
-                '[reference_fonts.families]\nheebo = "A Hebrew sans."\n')
+            (root / 'context.md').write_text(
+                '```toml\n[reference_fonts.families]\nheebo = "A Hebrew sans."\n```\n')
             family = Path(temp) / 'clone/ofl/heebo'
             family.mkdir(parents=True)
             for name in ('Heebo[wght].ttf', 'OFL.txt', 'METADATA.pb'):

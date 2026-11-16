@@ -67,7 +67,7 @@ class Project:
                                'with masters')
         self.masters = list(self.ufos)
         self.fonts = (self.sources / self.config.get('outputDir', '../fonts')).resolve()
-        self.design_config = self.sources / 'design.toml'
+        self.design_config = self.root / 'context.md'
         self.held_out = self.sources / 'held-out-glyphs.toml'
 
     def ufo(self, master, root=None):
@@ -82,8 +82,20 @@ class Project:
         return self.ufos[master].relative_to(self.root).as_posix()
 
     def design(self):
-        """The contents of sources/design.toml."""
-        return tomllib.loads(self.design_config.read_text())
+        """The settings of the project: the `toml` code blocks of context.md,
+        read as one TOML document."""
+        # The other lines become empty lines, so that an error names the
+        # line of context.md.
+        lines, inside = [], False
+        for line in self.design_config.read_text().splitlines():
+            fence = line.strip().startswith('```')
+            lines.append(line if inside and not fence else '')
+            if fence:
+                inside = not inside and line.strip() == '```toml'
+        try:
+            return tomllib.loads('\n'.join(lines))
+        except tomllib.TOMLDecodeError as error:
+            raise ProjectError(f'{self.design_config}: {error}') from None
 
 
 @functools.cache
