@@ -15,8 +15,9 @@ policy. It reads the sources and never writes them.
     fgtools check-design --queue      rank the glyphs that most composites wait on
 
 A contour glyph passes when its strokes are inside the target range, all
-points are on the 2-unit grid, the analyzer reports no kink, and all
-masters have the same structure. A composite passes when every part is green,
+points are on the 2-unit grid, the analyzer reports no kink, all masters
+have the same structure, and its color in text is inside the range of the
+reference fonts (fgtools/text_color.py). A composite passes when every part is green,
 all masters use the same parts, and Runebender's anchor recipe gives the same
 placement. A composite without a recipe needs review by eye. A pass is a filter before review, not approval.
 """
@@ -33,6 +34,7 @@ from pathlib import Path
 
 from fgtools import project
 from fgtools import source_inventory as inventory
+from fgtools import text_color
 
 
 def cache_dir():
@@ -123,7 +125,7 @@ def leaves(name, glyphs, seen=()):
     return out
 
 
-def check_contour(name, data, targets, root=None, masters=None):
+def check_contour(name, data, targets, root=None, masters=None, colors=None):
     findings = []
     for master in masters or list(data):
         record = data[master][name]
@@ -144,10 +146,24 @@ def check_contour(name, data, targets, root=None, masters=None):
             outside = sorted({length for length in lengths if not low <= length <= high})
             if outside:
                 findings.append(f'{master}: {key} {outside} outside {low} to {high}')
+    for master, (font, references) in (colors or {}).items():
+        comparison = text_color.compare(font, name, references)
+        line = text_color.finding(master, comparison) if comparison else None
+        if line:
+            findings.append(line)
     first, *others = (data[m][name] for m in data)
     if any(first['point_types'] != other['point_types'] for other in others):
         findings.append('masters: contour or point structure differs')
     return findings
+
+
+def color_fonts(source):
+    """{master: (font of the sources, reference fonts)} for the color finding."""
+    from fgtools import accent_proofs
+    from fgtools.accent_placement import Font
+    weights = accent_proofs.master_weights(source)
+    return {master: (Font.from_ufo(source.ufo(master)), text_color.reference_fonts(source, weights[master]))
+            for master in source.masters}
 
 
 def check_composite(name, data, recipe):
@@ -258,12 +274,13 @@ def main():
         parser.error('name glyphs or pass --not-green, --green, --ready, --queue or --observe')
 
     recipe = {m: recipes(m) for m in masters} if any(is_composite(n) for n in names) else {}
+    colors = color_fonts(source) if any(not is_composite(n) for n in names) else {}
     report = {}
     for name in names:
         if is_composite(name):
             report[name] = check_composite(name, data, recipe)
         else:
-            report[name] = check_contour(name, data, targets)
+            report[name] = check_contour(name, data, targets, colors=colors)
 
     passed = [n for n, findings in report.items() if not findings]
     if args.json:

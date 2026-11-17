@@ -19,6 +19,11 @@ One row is one glyph in one master. The columns are:
     references  the same character in each family of reference-fonts/, at
                 the weight of the master
 
+Under each row, the glyph is set in a line of text between control letters
+and in words, sharp and blurred, to judge its color: a glyph that is too
+heavy is a dark spot in the blurred line. The caption gives the color as a
+number and its range in the reference fonts (see fgtools/text_color.py).
+
 Every cell has the same scale and the same baseline, and a reference font is
 drawn at the same em size. The lines are the descender, the baseline, the
 x-height, the cap height and the ascender of the master. The command does
@@ -35,7 +40,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from fgtools import accent_proofs, project
+from fgtools import accent_proofs, project, text_color
 from fgtools.accent_placement import Font
 
 BACKGROUND, CELL_FILL = (38, 38, 40), (46, 46, 49)
@@ -108,14 +113,7 @@ def render(names, masters=None, beside=(), base='main', out=None, root=None):
             now = Font.from_ufo(ufo)
             old_path = base_ufo(layout.root, ufo, base, Path(temporary) / master)
             old = Font.from_ufo(old_path) if old_path else None
-            references = []
-            folder = layout.root / 'reference-fonts'
-            if folder.is_dir():
-                for path in accent_proofs.reference_paths(folder, weights[master]):
-                    try:
-                        references.append((path.parent.name, Font.from_compiled(path, weights[master])))
-                    except Exception as error:      # a font that cannot be read is named and left out
-                        print(f'{path.name}: not read ({error})', file=sys.stderr)
+            references = text_color.reference_fonts(layout, weights[master])
             lines = metrics(ufo)
             for name in names:
                 if name not in now.glyph_set:
@@ -139,12 +137,20 @@ def render(names, masters=None, beside=(), base='main', out=None, root=None):
                     if other and not reference.shape(other).empty:
                         cells.append(('reference', label, reference, other,
                                       now.units_per_em / reference.units_per_em))
-                rows.append((lines, cells, ufo))
+                comparison = text_color.compare(now, name, references)
+                note = f'{name}  {master}  in text'
+                if comparison:
+                    own, low, high, count = comparison
+                    note += (f'.  Color {own:.2f} of the control letter; {count} reference fonts have '
+                             f'{low:.2f} to {high:.2f}.')
+                rows.append((lines, cells, (now, name, note)))
         if not rows:
             sys.exit('No glyph to draw.')
         top = max(max(lines) for lines, _, _ in rows)
         bottom = min(min(lines) for lines, _, _ in rows)
         height = round((top - bottom) * SCALE) + MARGIN * 2 + CAPTION
+        strips = [text_color.strip(font, name, top, bottom) for _, _, (font, name, _) in rows]
+        strip_height = sum(part.shape[0] for part in strips[0]) + 28
         baseline = CAPTION + MARGIN + round(top * SCALE)
 
         def cell_width(cell):
@@ -152,10 +158,25 @@ def render(names, masters=None, beside=(), base='main', out=None, root=None):
             return max(220, round(font.advances.get(cell[3], 0) * cell[4] * SCALE) + MARGIN * 2)
 
         width = max(sum(cell_width(cell) + 4 for cell in cells) for _, cells, _ in rows) + 4
-        image = Image.new('RGB', (width, (height + 4) * len(rows) + 4), BACKGROUND)
+        width = max(width, max(sharp.shape[1] for sharp, _ in strips) + 8)
+        step = height + strip_height + 8
+        image = Image.new('RGB', (width, step * len(rows) + 4), BACKGROUND)
         draw = ImageDraw.Draw(image)
-        for line, (lines, cells, ufo) in enumerate(rows):
-            y0, x0 = 4 + line * (height + 4), 4
+        for line, (lines, cells, (_, _, note)) in enumerate(rows):
+            y0, x0 = 4 + line * step, 4
+            # The glyph in text, sharp and blurred, under its row.
+            y = y0 + height + 4
+            draw.rectangle((4, y, width - 4, y + strip_height), fill=CELL_FILL)
+            draw.text((12, y + 8), note, fill=TEXT, font=small)
+            y += 28
+            for part in strips[line]:
+                box = (4, y, 4 + part.shape[1], y + part.shape[0])
+                under = numpy.asarray(image.crop(box), dtype=numpy.float32)
+                ink = part[..., None]
+                mixed = under * (1 - ink) + numpy.array(INK, dtype=numpy.float32) * ink
+                image.paste(Image.fromarray(mixed.astype(numpy.uint8)), box)
+                y += part.shape[0]
+            draw = ImageDraw.Draw(image)
             for kind, label, font, name, factor in cells:
                 cell = cell_width((kind, label, font, name, factor))
                 box = (x0, y0, x0 + cell, y0 + height)
