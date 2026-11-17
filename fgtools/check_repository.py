@@ -52,8 +52,10 @@ OPTIONAL = [
     'sources/*.py',
     # The Google Fonts article and the DesignBot scripts of the images.
     'documentation/article/**', 'documentation/readme-images/*.rs',
-    # The marketing media: the brand and one DesignBot script for each format (`fgtools media`).
-    'documentation/media/brand.toml', 'documentation/media/*.rs',
+    # The marketing media: the brand, the formats and one DesignBot script for each format
+    # (`fgtools media`). The folder of a script is the kind of media that it makes.
+    'documentation/media/brand.toml', 'documentation/media/formats.toml',
+    'documentation/media/images/*.rs', 'documentation/media/carousels/*.rs', 'documentation/media/videos/*.rs',
 ]
 
 # Names that mark a record of work, not a maintained document.

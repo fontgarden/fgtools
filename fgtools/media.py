@@ -1,11 +1,18 @@
 """Render the marketing media of a font project with DesignBot.
 
-A project keeps its formats in `documentation/media/`: one DesignBot script
-(`.rs`) for each format, for example a specimen poster or an animation of the
-weight axis, and `brand.toml` with the colors, the words and the list of
-canvases for each format. The designer changes these files for the style of
-the font. The canvases (the sizes and the safe areas of the platforms) are the
-same for every font and are in `fgtools/media_canvases.toml`.
+A project keeps its media in `documentation/media/`:
+
+    brand.toml       the colors and the texts of the font
+    formats.toml     one table for each format: its canvases, words, caption and alternative text
+    images/          one DesignBot script (`.rs`) for each format that is one picture
+    carousels/       the formats with several pages
+    videos/          the formats that move
+
+A format is one kind of picture, for example a specimen poster or an animation
+of the weight axis. The folder of its script says what it makes. The designer
+changes these files for the style of the font. The canvases (the sizes and the
+safe areas of the platforms) are the same for every font and are in
+`fgtools/media_canvases.toml`.
 
     fgtools media                       every format on each of its canvases
     fgtools media weight-axis           one format
@@ -14,17 +21,17 @@ same for every font and are in `fgtools/media_canvases.toml`.
     fgtools media --list                list the formats and the canvases
 
 The command gives each script a module `brief` with the canvas, the safe area,
-the family name, the font file, the weight range, the colors and the texts,
-so that a script holds only the layout. One output is one format on one
-canvas: `output/media/<format>/<family>_<format>_<canvas>.<extension>`. An
-image is a PNG, a carousel is numbered PNG pages and one PDF (the document
+the family name, the font file, the weight range, the metrics, the colors and
+the texts, so that a script holds only the layout. One output is one format on
+one canvas: `output/media/<folder>/<format>/<family>_<format>_<canvas>.<extension>`.
+An image is a PNG, a carousel is numbered PNG pages and one PDF (the document
 post of LinkedIn), and a video is an MP4. Beside each output is a JSON record
 with the caption, the alternative text, the size and the commit of the sources.
 `output/media/index.html` is a review page that shows every output.
 
 The command renders nothing when the font has no glyph for a character of
-the texts in brand.toml, because DesignBot would draw it with a system font.
-It does not yet check the text that a script writes itself.
+the texts in brand.toml and formats.toml, because DesignBot would draw it with
+a system font. It does not yet check the text that a script writes itself.
 
 It needs the `designbot` command, and `ffmpeg` for video:
 
@@ -45,6 +52,8 @@ from fgtools import project
 CANVASES = Path(__file__).with_name('media_canvases.toml')
 BRIEF = Path(__file__).with_name('media_brief.rs')
 EXTENSION = {'image': 'png', 'carousel': 'png', 'video': 'mp4'}
+FOLDERS = {'images': 'image', 'carousels': 'carousel', 'videos': 'video'}     # folder: kind
+MEDIA = 'documentation/media'
 INSTALL = 'cargo install --git https://github.com/eliheuer/designbot designbot-cli'
 
 
@@ -80,8 +89,31 @@ def font_facts(layout):
     return path, family, low, high, cap, metrics
 
 
+def load_brand(layout):
+    """brand.toml with a table `format`: each format of formats.toml with the kind and the script
+    that its folder gives."""
+    folder = layout.root / MEDIA
+    if not (folder / 'brand.toml').is_file():
+        raise SystemExit(f'No {MEDIA}/brand.toml. The project template has a set to start from.')
+    brand = tomllib.loads((folder / 'brand.toml').read_text())
+    formats = tomllib.loads((folder / 'formats.toml').read_text()) if (folder / 'formats.toml').is_file() else {}
+    for name, table in formats.items():
+        found = [(kind_folder, kind) for kind_folder, kind in FOLDERS.items()
+                 if (folder / kind_folder / f'{name}.rs').is_file()]
+        if len(found) != 1:
+            places = ', '.join(f'{MEDIA}/{kind_folder}/' for kind_folder in FOLDERS)
+            raise SystemExit(f'formats.toml names the format `{name}`. Its script {name}.rs must be in one of {places}.')
+        table['folder'], table['kind'] = found[0]
+        table['script'] = folder / found[0][0] / f'{name}.rs'
+    scripts = {path.stem for kind_folder in FOLDERS for path in (folder / kind_folder).glob('*.rs')}
+    for name in sorted(scripts - set(formats)):
+        print(f'{name}.rs has no table in formats.toml and is not rendered.', file=sys.stderr)
+    brand['format'] = formats
+    return brand
+
+
 def missing_characters(brand, facts):
-    """The characters of the texts of brand.toml that the font has no glyph for. DesignBot draws
+    """The characters of the texts of the project that the font has no glyph for. DesignBot draws
     such a character with a system font, and a picture of another font is worse than no picture."""
     from fontTools.ttLib import TTFont
     covered = TTFont(facts[0], lazy=True).getBestCmap()
@@ -102,15 +134,11 @@ def outputs(layout, brand, names=None, only_canvas=None):
     known, formats = canvases(), brand.get('format', {})
     for name in names or []:
         if name not in formats:
-            raise SystemExit(f'No format `{name}` in brand.toml. Formats: {", ".join(formats) or "none"}.')
+            raise SystemExit(f'No format `{name}` in formats.toml. Formats: {", ".join(formats) or "none"}.')
     found = []
     for name, table in formats.items():
         if names and name not in names:
             continue
-        if not (layout.root / 'documentation/media' / f'{name}.rs').is_file():
-            raise SystemExit(f'brand.toml names the format `{name}`, and documentation/media/{name}.rs does not exist.')
-        if table.get('kind', 'image') not in EXTENSION:
-            raise SystemExit(f'Format `{name}`: kind is image, carousel or video.')
         for canvas in table.get('canvases', []):
             if canvas not in known:
                 raise SystemExit(f'Format `{name}`: no canvas `{canvas}`. Canvases: {", ".join(known)}.')
@@ -149,9 +177,9 @@ def program(layout, brand):
     names = list(brand.get('format', {}))
     parts = []
     for index, name in enumerate(names):
-        source = (layout.root / 'documentation/media' / f'{name}.rs').read_text()
+        source = brand['format'][name]['script'].read_text()
         if 'fn main()' not in source:
-            raise SystemExit(f'documentation/media/{name}.rs has no `fn main()`.')
+            raise SystemExit(f'{name}.rs has no `fn main()`.')
         source = source.replace('//!', '//').replace('fn main()', 'pub fn main()', 1)
         parts.append(f'#[allow(dead_code)]\nmod format_{index} {{\nuse crate::brief;\n{source}\n}}\n')
     arms = ''.join(f'        "{name}" => format_{index}::main(),\n' for index, name in enumerate(names))
@@ -179,8 +207,8 @@ def add_silence(path):
 
 def render(layout, brand, script, name, table, canvas_name, canvas, facts, safe_areas=False):
     """Render one format on one canvas. Returns the list of the files written."""
-    kind = table.get('kind', 'image')
-    folder = layout.root / 'output/media' / name
+    kind = table['kind']
+    folder = layout.root / 'output/media' / table['folder'] / name
     folder.mkdir(parents=True, exist_ok=True)
     stem = f'{slug(facts[1])}_{name}_{canvas_name}' + ('_safe-areas' if safe_areas else '')
     written = []
@@ -229,7 +257,7 @@ PAGE = """<!doctype html>
 </style>
 <h1>{family}: media</h1>
 <p>Every output of <code>fgtools media</code>, from the sources at commit <code>{commit}</code>. One output is one
-format on one canvas. The brand and the format scripts are in <code>documentation/media/</code>; the canvases are
+format on one canvas. The brand, the formats and their scripts are in <code>documentation/media/</code>; the canvases are
 the same for every font.</p>
 <table><tr><th>Canvas</th><th>Size</th><th>Safe area: top, right, bottom, left</th><th>Use</th></tr>
 {canvas_rows}</table>
@@ -249,12 +277,12 @@ def write_index(layout, brand, family):
         f'<td>{escape(c["use"])}</td></tr>\n' for name, c in known.items())
     sections = []
     for name, table in brand.get('format', {}).items():
-        records = [json.loads(path.read_text()) for path in sorted((root / name).glob('*.json'))]
+        records = [json.loads(path.read_text()) for path in sorted((root / table['folder'] / name).glob('*.json'))]
         figures = []
         for record in records:
             label = f'{record["canvas"]}, {record["width"]} x {record["height"]}'
             for file in record['files']:
-                source = f'{name}/{file}'
+                source = f'{table["folder"]}/{name}/{file}'
                 if file.endswith('.mp4'):
                     media = f'<video src="{escape(source)}" autoplay loop muted playsinline></video>'
                 elif file.endswith('.pdf'):
@@ -264,9 +292,9 @@ def write_index(layout, brand, family):
                 else:
                     media = f'<img src="{escape(source)}" alt="{escape(record["alt"])}" loading="lazy">'
                 figures.append(f'<figure>{media}<figcaption>{escape(label)}<br>{escape(file)}</figcaption></figure>')
-        text = lambda key: escape(table.get(key, '')) or f'<span class="missing">no {key} in brand.toml</span>'
+        text = lambda key: escape(table.get(key, '')) or f'<span class="missing">no {key} in formats.toml</span>'
         note = '' if records else '<p class="missing">Not rendered.</p>'
-        sections.append(f'<h2>{escape(name)}</h2>\n<p>{escape(table.get("kind", "image"))} on '
+        sections.append(f'<h2>{escape(name)}</h2>\n<p>{escape(table["kind"])} on '
                         f'{escape(", ".join(table.get("canvases", [])))}.<br>Caption: {text("caption")}<br>'
                         f'Alternative text: {text("alt")}</p>{note}\n<div class="row">{"".join(figures)}</div>')
     page = PAGE.format(family=escape(family), commit=escape(commit(layout.root) or 'unknown'),
@@ -277,31 +305,28 @@ def write_index(layout, brand, family):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='fgtools media', description=__doc__.split('\n')[0])
-    parser.add_argument('formats', nargs='*', help='format names; the default is every format of brand.toml')
+    parser.add_argument('formats', nargs='*', help='format names; the default is every format of formats.toml')
     parser.add_argument('--canvas', help='one canvas; the default is each canvas of the format')
     parser.add_argument('--safe-areas', action='store_true', help='draw the safe area of the canvas on each picture')
     parser.add_argument('--list', action='store_true', help='list the formats and the canvases, and render nothing')
     args = parser.parse_args(argv)
     layout = project.load()
-    brand_path = layout.root / 'documentation/media/brand.toml'
-    if not brand_path.is_file():
-        raise SystemExit('No documentation/media/brand.toml. The project template has a set to start from.')
-    brand = tomllib.loads(brand_path.read_text())
+    brand = load_brand(layout)
     todo = outputs(layout, brand, args.formats, args.canvas)
     if args.list:
         for name, table in brand.get('format', {}).items():
-            print(f'{name}  {table.get("kind", "image")}  {" ".join(table.get("canvases", []))}')
+            print(f'{name}  {table["kind"]}  {" ".join(table.get("canvases", []))}')
         for name, canvas in canvases().items():
             print(f'canvas {name}  {canvas["width"]} x {canvas["height"]}  {canvas["use"]}')
         return
     if shutil.which('designbot') is None:
         raise SystemExit(f'`fgtools media` needs the `designbot` command, which is not on PATH. Install it:\n  {INSTALL}')
-    if any(table.get('kind') == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
+    if any(table['kind'] == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
         raise SystemExit('A video format needs the `ffmpeg` command, which is not on PATH.')
     facts = font_facts(layout)
     missing = missing_characters(brand, facts)
     if missing:
-        print(f'Nothing rendered: the font has no glyph for {len(missing)} characters of the texts in brand.toml: '
+        print(f'Nothing rendered: the font has no glyph for {len(missing)} characters of the texts in brand.toml and formats.toml: '
               f'{" ".join(missing[:40])}\nDraw them, or change the texts.')
         return
     script = program(layout, brand)

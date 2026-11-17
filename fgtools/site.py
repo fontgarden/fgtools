@@ -15,6 +15,7 @@ import shutil
 from html import escape
 
 from fgtools import project
+from fgtools.media import FOLDERS
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -48,7 +49,11 @@ def build(layout):
         parts.append(('proof.pdf', 'The print proof (PDF)'))
     media = layout.root / 'output/media'
     if (media / 'index.html').is_file():
-        shutil.copytree(media, site / 'media', ignore=shutil.ignore_patterns('.build', '*_safe-areas*'))
+        (site / 'media').mkdir()
+        shutil.copy(media / 'index.html', site / 'media/index.html')
+        for folder in FOLDERS:      # only the folders of the three kinds: no build files, no old renders
+            if (media / folder).is_dir():
+                shutil.copytree(media / folder, site / 'media' / folder, ignore=shutil.ignore_patterns('*_safe-areas*'))
         parts.append(('media/', 'The marketing media: every format on each of its canvases'))
     name = layout.config.get('familyName') or layout.root.name
     links = '\n'.join(f'  <li><a href="{escape(path)}">{escape(text)}</a></li>' for path, text in parts)

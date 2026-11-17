@@ -8,12 +8,20 @@ from fgtools import media
 
 
 def project_with(formats, scripts):
+    """A project with formats.toml and the scripts {name: folder}."""
     root = Path(tempfile.mkdtemp())
     folder = root / 'documentation/media'
     folder.mkdir(parents=True)
-    for name in scripts:
-        (folder / f'{name}.rs').write_text('fn main() {}\n')
-    return SimpleNamespace(root=root), {'format': formats}
+    (folder / 'brand.toml').write_text('[text]\nwords = ["A"]\n')
+    lines = []
+    for name, table in formats.items():
+        lines.append(f'[{name}]\ncanvases = {table["canvases"]!r}\n'.replace("'", '"'))
+    (folder / 'formats.toml').write_text('\n'.join(lines))
+    for name, kind_folder in scripts.items():
+        (folder / kind_folder).mkdir(exist_ok=True)
+        (folder / kind_folder / f'{name}.rs').write_text('fn main() {}\n')
+    layout = SimpleNamespace(root=root)
+    return layout, layout
 
 
 class Media(unittest.TestCase):
@@ -24,20 +32,22 @@ class Media(unittest.TestCase):
             self.assertGreater(canvas['height'] - safe['top'] - safe['bottom'], canvas['height'] / 3, name)
 
     def test_one_output_is_one_format_on_one_canvas(self):
-        layout, brand = project_with({'poster': {'kind': 'image', 'canvases': ['portrait', 'square']},
-                                      'loop': {'kind': 'video', 'canvases': ['vertical']}}, ['poster', 'loop'])
+        layout, _ = project_with({'poster': {'canvases': ['portrait', 'square']},
+                                  'loop': {'canvases': ['vertical']}}, {'poster': 'images', 'loop': 'videos'})
+        brand = media.load_brand(layout)
+        self.assertEqual((brand['format']['poster']['kind'], brand['format']['loop']['kind']), ('image', 'video'))
         found = media.outputs(layout, brand)
         self.assertEqual([(name, canvas) for name, _, canvas, _ in found],
                          [('poster', 'portrait'), ('poster', 'square'), ('loop', 'vertical')])
         self.assertEqual(len(media.outputs(layout, brand, ['poster'], 'square')), 1)
 
     def test_a_format_without_a_script_or_with_an_unknown_canvas_stops_the_command(self):
-        layout, brand = project_with({'poster': {'canvases': ['portrait']}}, [])
+        layout, _ = project_with({'poster': {'canvases': ['portrait']}}, {})
         with self.assertRaises(SystemExit):
-            media.outputs(layout, brand)
-        layout, brand = project_with({'poster': {'canvases': ['poster-size']}}, ['poster'])
+            media.load_brand(layout)
+        layout, _ = project_with({'poster': {'canvases': ['poster-size']}}, {'poster': 'images'})
         with self.assertRaises(SystemExit):
-            media.outputs(layout, brand)
+            media.outputs(layout, media.load_brand(layout))
 
     def test_the_arguments_carry_the_canvas_the_font_and_the_brand(self):
         canvas = media.canvases()['vertical']

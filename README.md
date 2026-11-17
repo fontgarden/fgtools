@@ -88,7 +88,7 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
-| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list]` | Render the marketing media of the project with DesignBot: each format of `documentation/media/brand.toml` on each of its canvases, into `output/media/`. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
+| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list]` | Render the marketing media of the project with DesignBot: each format of `documentation/media/formats.toml` on each of its canvases, into `output/media/`. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
 | `fgtools site` | Collect `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
@@ -259,8 +259,14 @@ in the project, in `documentation/media/`:
 
 | File | Content |
 | --- | --- |
-| `brand.toml` | The colors, the texts, and one table for each format: its kind (`image`, `carousel` or `video`), its canvases, its caption and its alternative text. |
-| `<format>.rs` | The DesignBot script of the format. It holds the layout only. |
+| `brand.toml` | The colors and the texts of the font. |
+| `formats.toml` | One table for each format: its canvases, its words, its caption and its alternative text. |
+| `images/<format>.rs` | The DesignBot script of a format that is one picture. It holds the layout only. |
+| `carousels/<format>.rs` | The script of a format with several pages. |
+| `videos/<format>.rs` | The script of a format that moves. |
+
+The folder of a script says what the format makes, and the rendered files are
+in a folder with the same name.
 
 The command adds the module `brief` to each script. It gives the script the
 canvas, the safe area, the family name, the font file, the weight range, the
@@ -275,7 +281,7 @@ cap height, the colors and the texts, so one script draws on every canvas.
 | `card` | 1200 x 630 | The link preview |
 
 One output is one format on one canvas:
-`output/media/<format>/<family>_<format>_<canvas>.<extension>`, with a JSON
+`output/media/<folder>/<format>/<family>_<format>_<canvas>.<extension>`, with a JSON
 record of the caption, the alternative text, the size and the commit of the
 sources. `--safe-areas` draws the safe area of the canvas on each picture.
 Git ignores `output/`: the media are not tracked.
