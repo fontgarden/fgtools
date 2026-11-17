@@ -1,41 +1,32 @@
-# The default formats of `fgtools media`. A project gets all of them without a
-# file of its own. A table in documentation/media/formats.toml of a project
-# with the same name changes single values, for example the canvases or the
-# words, and adds the caption and the alternative text. A script with the same
-# name in the project replaces the default script.
-#
-# `words` names the texts that a format draws: "words", "glyphs" or "lines" of
-# brand.toml, or a list in the project. A text with a character that the font
-# does not have is left out. A format that needs the family name is not
-# rendered before the font can set its name.
+# The default formats of `fgtools media`, and the canvases of each. A project
+# gets all of them without a file of its own. A table with the name of a
+# format in documentation/media/formats.toml of a project changes the
+# canvases and adds the caption and the alternative text. A script with the
+# same name in the project replaces the default script.
 
-[specimen-poster]
-canvases = ["portrait", "square", "landscape"]
-words = "words"
-
-[release]
-needs_family_name = true
+[words]
 canvases = ["portrait", "square", "landscape", "vertical"]
-words = "words"
 
-[link-card]
-needs_family_name = true
-canvases = ["card"]
-words = "words"
-
-[glyph-detail]
+[weights]
 canvases = ["portrait", "square"]
-words = "glyphs"
 
-[character-set]
-canvases = ["portrait"]
-words = "words"
+[text]
+canvases = ["portrait", "square"]
 
 [scripts]
-canvases = ["portrait", "landscape"]
-words = "lines"
+canvases = ["portrait", "square"]
+
+[release]
+canvases = ["portrait", "square", "landscape", "vertical"]
+
+[link-card]
+canvases = ["card"]
+
+[glyph]
+canvases = ["portrait", "square"]
+
+[characters]
+canvases = ["portrait"]
 
 [weight-axis]
-needs_weight_axis = true
 canvases = ["vertical", "portrait", "landscape"]
-words = "words"

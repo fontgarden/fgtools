@@ -1,0 +1,43 @@
+# The words of the specimens, for `fgtools media`.
+#
+# A large word in a specimen has a fixed size, and the word is chosen so that
+# it fills the measure. These lists are the supply. The words are the
+# vocabulary of the work: grids, measures, letters and construction, in
+# English and German for Latin. The words of brand.toml of a project are added.
+
+Latin = [
+  "Raster", "Grid", "Unit", "Module", "System", "Norm", "Form", "Regel", "Punkt", "Linie", "Kurve", "Zeichen",
+  "Schrift", "Satz", "Spalte", "Zeile", "Measure", "Column", "Margin", "Square", "Circle", "Angle", "Format",
+  "Scale", "Weight", "Bold", "Regular", "Grotesk", "Typeface", "Letter", "Figure", "Number", "Binary", "Power",
+  "Two", "Four", "Eight", "Sixteen", "Method", "Program", "Structure", "Order", "Rhythm", "Contrast",
+  "Proportion", "Konstruktion", "Gestaltung", "Ordnung", "Quadrat", "Kreis", "Winkel", "Mass", "Einheit",
+  "Gewicht", "Buchstabe", "Ziffer", "Zahl", "Baseline", "Counter", "Stem", "Bowl", "Terminal", "Outline",
+  "Contour", "Handle", "Vector", "Lattice", "Matrix", "Pixel", "Signal", "Logic", "Hamburg", "Basel", "Berlin",
+  "Ulm", "Dessau", "Weimar", "Tokyo", "Milano", "Paris", "London", "Oakland", "Point", "Line", "Plane", "Field",
+  "Frame", "Border", "Corner", "Bevel", "Chamfer", "Joint", "Stroke", "Curve", "Arc", "Axis", "Master",
+  "Source", "Design", "Drawing", "Sketch", "Proof", "Print", "Paper", "Page", "Sheet", "Poster", "Book",
+  "Text", "Word", "Glyph", "Character", "Alphabet", "Script", "Language", "Reading", "Writing", "Type",
+  "Typography", "Typographie", "Grafik", "Plakat", "Papier", "Seite", "Blatt", "Buch", "Wort", "Sprache",
+  "Lesen", "Schreiben", "Zeichnung", "Entwurf", "Probe", "Druck", "Feld", "Rahmen", "Ecke", "Strich", "Bogen",
+  "Achse", "Quelle", "Muster", "Modul", "Folge", "Reihe", "Stufe", "Ebene", "Kante", "Breite", "Tiefe",
+  "Width", "Height", "Depth", "Length", "Space", "Spacing", "Kerning", "Tracking", "Leading", "Density",
+  "Texture", "Pattern", "Series", "Sequence", "Step", "Level", "Edge", "Center", "Middle", "Half", "Quarter",
+  "Double", "Single", "Simple", "Plain", "Clear", "Exact", "Even", "Open", "Free", "Public", "Common",
+  "Standard", "Normal", "Medium", "Heavy", "Light", "Dark", "Black", "White", "Gray", "Machine", "Engine",
+  "Tool", "Model", "Data", "Dataset", "Record", "Table", "Index", "Value", "Range", "Limit", "Rule", "Law",
+  "Reason", "Function", "Purpose", "Economy", "Clarity", "Precision", "Geometry", "Arithmetic", "Algebra",
+]
+
+Arabic = [
+  "شبكة", "نظام", "حرف", "خط", "شكل", "وزن", "نقطة", "قلم", "ورق", "علم", "فن", "هندسة", "بناء", "ضوء",
+  "لون", "مربع", "دائرة", "زاوية", "مسافة", "قياس", "حجم", "كلمة", "لغة", "صفحة", "طباعة", "تصميم", "معيار",
+  "وحدة", "قاعدة", "ميزان", "سطر", "عمود", "هامش", "نص", "رقم", "عدد", "حساب", "برمجة", "حاسوب", "بيانات",
+  "مصدر", "مفتوح", "حر", "بسيط", "واضح", "دقيق", "منتظم", "عريض", "خفيف", "ثقيل", "كتاب", "مدينة",
+]
+
+Hebrew = [
+  "רשת", "מערכת", "אות", "גופן", "קו", "צורה", "משקל", "נקודה", "עט", "נייר", "מדע", "אמנות", "הנדסה",
+  "בנייה", "אור", "צבע", "ריבוע", "עיגול", "זווית", "מרחק", "מידה", "גודל", "מילה", "שפה", "עמוד", "דפוס",
+  "עיצוב", "תקן", "יחידה", "כלל", "שורה", "טור", "שוליים", "טקסט", "מספר", "חשבון", "תכנות", "מחשב",
+  "נתונים", "מקור", "פתוח", "חופשי", "פשוט", "ברור", "מדויק", "רגיל", "מודגש", "קל", "כבד", "ספר", "עיר",
+]

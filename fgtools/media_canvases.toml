@@ -38,6 +38,14 @@ height = 630
 safe = { top = 15, right = 0, bottom = 15, left = 0 }
 use = "The link preview (Open Graph image and X card). X cuts it to 2:1."
 
+[canvas.page]
+width = 1684
+height = 1190
+scale = 0.5
+theme = "light"
+safe = { top = 0, right = 0, bottom = 0, left = 0 }
+use = "The page of the print specimen: A4 landscape, written as a PDF at half size, so that 1 pixel is half a point."
+
 # One video preset for every platform. Each platform encodes the file again.
 [video]
 frames_per_second = 30

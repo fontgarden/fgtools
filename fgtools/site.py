@@ -2,7 +2,7 @@
 
     fgtools site
 
-It copies `output/proof/proof.pdf` and the renders of `output/media/` into
+It copies the print specimen, `output/proof/proof.pdf` and the renders of `output/media/` into
 `output/site/` and writes `output/site/index.html`, which links to both. The
 CI of a project publishes this folder on GitHub Pages, so that the README and
 other pages can show the pictures and no rendered file is tracked in Git.
@@ -55,6 +55,9 @@ def build(layout):
             if (media / folder).is_dir():
                 shutil.copytree(media / folder, site / 'media' / folder, ignore=shutil.ignore_patterns('*_safe-areas*'))
         parts.append(('media/', 'The marketing media: every format on each of its canvases'))
+    for specimen in sorted((layout.root / 'output/specimen').glob('*.pdf')):
+        shutil.copy(specimen, site / 'specimen.pdf')
+        parts.insert(0, ('specimen.pdf', 'The print specimen (PDF)'))
     name = layout.config.get('familyName') or layout.root.name
     links = '\n'.join(f'  <li><a href="{escape(path)}">{escape(text)}</a></li>' for path, text in parts)
     (site / 'index.html').write_text(PAGE.format(name=escape(str(name)), links=links))

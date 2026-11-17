@@ -88,8 +88,8 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
-| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list] [--copy FORMAT]` | Render the marketing media of the project with DesignBot: each format on each of its canvases, into `output/media/`. The default formats are in fgtools, and `documentation/media/` of the project changes them. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
-| `fgtools site` | Collect `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
+| `fgtools media [FORMAT ...] [--canvas NAME] [--lattice] [--specimen] [--list] [--copy FORMAT]` | Render the specimens and the marketing media of the project: each format on each of its canvases, into `output/media/`, laid out on the lattice of the typeface and checked. `--specimen` writes the print specimen. See [Specimens and marketing media](#specimens-and-marketing-media). |
+| `fgtools site` | Collect the print specimen, `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
 | `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
@@ -126,7 +126,8 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.render_glyphs` | `render` |
 | `fgtools.measure_picture` | `measure-picture` |
 | `fgtools.site` | `site` |
-| `fgtools.media` | `media`. The canvases are in `fgtools/media_canvases.toml`, the default formats in `fgtools/media_formats/`, and the module that each script gets is `fgtools/media_brief.rs`. |
+| `fgtools.media` | `media` |
+| `fgtools.media_layout` | the lattice, the typesetter and the checks of `media` |
 | `fgtools.text_color` | the color of a glyph in text, for `render` and `check-design` |
 | `fgtools.edit_glyph` | `edit` |
 | `fgtools.diff` | `diff` |
@@ -246,52 +247,67 @@ google/fonts that `FONTGARDEN_GOOGLE_FONTS` names, or a download from GitHub.
 The command lists the folders that `CONTEXT.md` does not name, and does not
 remove them.
 
-## Marketing media
+## Specimens and marketing media
 
-`fgtools media` renders pictures, carousels and videos of the font for
-Instagram, TikTok, LinkedIn, X and Mastodon. It needs the `designbot` command, and `ffmpeg` for
-video.
+`fgtools media` renders the pictures, the carousels and the videos of a font
+for Instagram, TikTok, LinkedIn, X and Mastodon, and `fgtools media
+--specimen` writes the print specimen. It needs the `designbot` command, and
+`ffmpeg` for video.
 
-Every project gets the default formats, which are in fgtools
-(`fgtools/media_formats/`): a specimen poster, a release picture, a link card,
-a glyph on the grid, the character set, the scripts of the font and an
-animation of the weight axis. The canvases with their safe areas
-(`fgtools/media_canvases.toml`) and the runner are in fgtools too. An
-improvement of a default format reaches every font with the next version of
-fgtools.
+Every picture is laid out on the lattice of the typeface. The numbers are in
+the `[layout]` block of `CONTEXT.md` of the project, and the defaults are the
+same:
 
-A project changes the media for the style of its font in
-`documentation/media/`:
+| Rule | Default |
+| --- | --- |
+| The module: the large step of the design grid | 64 pixels |
+| The unit: every position is a multiple of it | 8 pixels |
+| The type sizes, which double | 32, 64, 128, 256, 512, 1024, and 24 for labels |
+
+The live area of a canvas is a whole number of modules, and the margin is the
+rest. The text area is the live area less one module on each side, inside the
+safe area of the platform. The cap top of a line stands on a module line. A
+text is chosen to fit its measure: the size never changes to make a text fit.
+
+| Part | File | Work |
+| --- | --- | --- |
+| Lattice, typesetter, checker | `fgtools/media_layout.py` | Gives a canvas its areas, measures text with HarfBuzz, fits a word to a measure, breaks a paragraph, and checks each element |
+| Formats | `fgtools/media_formats/` | One Python file for each format. A format places type, rules and paths on the lattice. |
+| Canvases | `fgtools/media_canvases.toml` | The sizes and the safe areas of the platforms, and the print page |
+| Words | `fgtools/media_words.toml` | The supply of words for the large settings, for Latin, Arabic and Hebrew |
+| Plotter | `fgtools/media_plotter.rs` | DesignBot draws the checked layout from a plot file |
+
+A layout with a fault is not written: a size that is not on the scale, a
+position off the unit, ink outside the text area, or more than three sizes or
+two weights in a picture. `--lattice` draws the lattice and the text area on
+each picture.
+
+Every project gets the default formats: `words`, `weights`, `text`,
+`scripts`, `release`, `link-card`, `glyph`, `characters` and `weight-axis`. A
+project changes the media for its font in `documentation/media/`:
 
 | File | Content |
 | --- | --- |
 | `brand.toml` | The colors and the texts of the font. A new font needs only this file. |
-| `formats.toml` | Optional. A table with the name of a format gives it other canvases or words, a caption and an alternative text. A table with a new name is a format of this font. |
-| `images/<format>.rs`, `carousels/<format>.rs`, `videos/<format>.rs` | Optional. A DesignBot script with the name of a default format replaces it; `fgtools media --copy <format>` copies the default script to start from. The folder says what the format makes. |
+| `formats.toml` | Optional. A table with the name of a format gives it other canvases, a caption and an alternative text. A table with a new name is a format of this font. |
+| `images/<format>.py`, `carousels/<format>.py`, `videos/<format>.py` | Optional. A script with the name of a default format replaces it; `fgtools media --copy <format>` copies the default script to start from. The folder says what the format makes. |
 
-A font at the start of its design has few glyphs, and the media use what it
-has. A text with a character that the font does not have is left out, a
-format that needs the family name is not rendered before the font can set it,
-and a font that can set no word of `brand.toml` shows the letters that exist.
-A picture never shows a system font.
+A script defines `draw(sheet, job)`. The sheet has the lattice (`sheet.cols`,
+`sheet.rows`, `sheet.text`, `sheet.label`, `sheet.header`, `sheet.rule`), and
+the job has the font (`job.type`), the brand and the texts. A script returns a
+sentence when it cannot draw, for example for a font with one weight.
 
-The command adds the module `brief` to each script. It gives the script the
-canvas, the safe area, the family name, the font file, the weight range, the
-cap height, the colors and the texts, so one script draws on every canvas.
-
-| Canvas | Size | Use |
-| --- | --- | --- |
-| `portrait` | 1080 x 1350 | Feed image and carousel on Instagram, LinkedIn, X and Mastodon; the page of a LinkedIn document |
-| `vertical` | 1080 x 1920 | Instagram Reel and Story, and TikTok |
-| `landscape` | 1920 x 1080 | Video and wide image on X, LinkedIn and Mastodon |
-| `square` | 1080 x 1080 | A square image |
-| `card` | 1200 x 630 | The link preview |
+A font at the start of its design has few glyphs, and the formats use what it
+has. A text with a character that the font does not have is left out, and a
+font that can set no word shows the letters that exist. A picture never shows
+a system font.
 
 One output is one format on one canvas:
-`output/media/<folder>/<format>/<family>_<format>_<canvas>.<extension>`, with a JSON
-record of the caption, the alternative text, the size and the commit of the
-sources. `--safe-areas` draws the safe area of the canvas on each picture.
-Git ignores `output/`: the media are not tracked.
+`output/media/<folder>/<format>/<family>_<format>_<canvas>.<extension>`, with a
+JSON record of the caption, the alternative text, the size and the commit of
+the sources. `output/media/index.html` shows every output. The print specimen
+is `output/specimen/<family>-specimen.pdf`: the formats on A4 pages, at half
+size, with dark ink on a light ground. Git ignores `output/`.
 
 ## Web proof
 

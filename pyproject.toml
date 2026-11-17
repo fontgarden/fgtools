@@ -29,5 +29,5 @@ fgtools = "fgtools.cli:main"
 packages = ["fgtools", "fgtools.proof_web"]
 
 [tool.setuptools.package-data]
-"fgtools" = ["accented_letters.toml", "harnesses.toml", "reference_fonts.toml", "media_canvases.toml", "media_brief.rs", "media_formats/*.toml", "media_formats/*/*.rs"]
+"fgtools" = ["accented_letters.toml", "harnesses.toml", "reference_fonts.toml", "media_canvases.toml", "media_words.toml", "media_plotter.rs", "media_formats/*.toml", "media_formats/*/*.py"]
 "fgtools.proof_web" = ["samples.toml", "render_detail.rs", "app/*"]

@@ -55,7 +55,7 @@ OPTIONAL = [
     # The marketing media: the brand, the formats and one DesignBot script for each format
     # (`fgtools media`). The folder of a script is the kind of media that it makes.
     'documentation/media/brand.toml', 'documentation/media/formats.toml',
-    'documentation/media/images/*.rs', 'documentation/media/carousels/*.rs', 'documentation/media/videos/*.rs',
+    'documentation/media/images/*.py', 'documentation/media/carousels/*.py', 'documentation/media/videos/*.py',
 ]
 
 # Names that mark a record of work, not a maintained document.
