@@ -18,6 +18,7 @@ use = "Feed image and carousel on Instagram, LinkedIn, X and Mastodon; the page 
 width = 1080
 height = 1920
 safe = { top = 270, right = 195, bottom = 672, left = 120 }
+lattice = true      # the modules are drawn on the whole canvas: the text area is a small part of it
 use = "Instagram Reel and Story, and TikTok. The interface covers the top, the bottom and the right side."
 
 [canvas.landscape]

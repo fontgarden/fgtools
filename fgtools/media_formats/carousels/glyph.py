@@ -10,10 +10,14 @@ def draw(sheet, job):
         return 'the font has no glyph to show yet'
     for character in job.glyphs:
         advance = font.measure(character)[0]
+        # One module at the right is for the values of the metrics. Two modules at the left are for
+        # their names, when the glyph leaves that room at this size.
         em = next((em for em in (1024, 512, 256) if (font.cap - font.descender) * em <= (sheet.rows - 2) * module
-                   and advance * em <= sheet.measure), 256)
+                   and advance * em <= (sheet.cols - 1) * module), 256)
         unit = em / font.upm                                  # pixels for one unit of the font
-        col = round((sheet.cols - advance * em / module) / 2)
+        named = advance * em <= (sheet.cols - 3) * module
+        room = sheet.cols - 1 - (2 if named else 0)
+        col = (2 if named else 0) + int((room - advance * em / module) / 2)
         x0, top = sheet.x(col), sheet.y(1)
         baseline, bottom = top + font.cap * em, top + (font.cap - font.descender) * em
         sheet.page()
@@ -37,7 +41,8 @@ def draw(sheet, job):
             sheet.line(sheet.x(0), y, sheet.x(sheet.cols), y, 'secondary')
             row = (y - sheet.y(0)) / module
             drop = -28 if value < 0 else 8          # under its line; the descender has its label above
-            sheet.label(label, 0, row, drop=drop, free=True)
+            if named:
+                sheet.label(label, 0, row, drop=drop, free=True)
             sheet.label(f'{value * font.upm:g}', sheet.cols, row, flush='right', drop=drop, free=True)
         for x in (x0, x0 + advance * em):
             sheet.line(x, top, x, bottom, 'secondary')

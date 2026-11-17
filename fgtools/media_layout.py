@@ -63,7 +63,7 @@ def lattice(canvas, layout=None):
     return {'width': width, 'height': height, 'module': module, 'unit': unit, 'sizes': layout['sizes'],
             'label_size': layout['label_size'], 'origin': (ox, oy), 'live': (cols, rows),
             'text': (col0, row0, text_cols, text_rows), 'scale': canvas.get('scale', 1),
-            'light': canvas.get('theme') == 'light'}
+            'light': canvas.get('theme') == 'light', 'lattice': bool(canvas.get('lattice'))}
 
 
 class Type:
@@ -78,6 +78,7 @@ class Type:
         self.font = hb.Font(self.face)
         self.characters = set(self.face.unicodes)
         self.cache = {}
+        self.avoid = set()          # characters that no chosen word has, for example a draft glyph
 
     def covers(self, text):
         return bool(text) and all(ord(character) in self.characters for character in text)
@@ -116,7 +117,7 @@ class Type:
             _, left, right = self.measure(text, weight)
             return right - left
 
-        words = [word for word in words if self.covers(word) and word not in used]
+        words = [word for word in words if self.covers(word) and word not in used and not self.avoid & set(word)]
         best = max(((ink(word), word) for word in words if ink(word) <= target), default=(0, None))
         if best[0] < target * 0.97:
             space = self.measure(' ', weight)[0] if self.covers(' ') else 0
@@ -187,7 +188,22 @@ class Sheet:
     # elements
     def page(self, duration=0):
         self.pages.append({'duration': duration, 'items': [], 'sizes': set(), 'weights': set()})
+        if self.grid.get('lattice'):
+            self.lattice()
         return self
+
+    def lattice(self):
+        """Draw the modules on the whole canvas, from edge to edge."""
+        (ox, oy), module = self.grid['origin'], self.grid['module']
+        width, height = self.grid['width'], self.grid['height']
+        x = ox % module
+        while x < width:
+            self.line(x, 0, x, height, 'grid', 1)
+            x += module
+        y = oy % module
+        while y < height:
+            self.line(0, y, width, y, 'grid', 1)
+            y += module
 
     def add(self, *item):
         self.pages[-1]['items'].append(item)

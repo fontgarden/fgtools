@@ -210,6 +210,7 @@ def make_job(layout, brand, type_, facts):
         capitals, small = [c for c in letters if c.isupper()], [c for c in letters if c.islower()]
         words['Latin'] += [''.join(group[start:start + size]) for group in (capitals, small)
                            for size in (2, 3, 4, 6) for start in range(0, len(group), size)]
+    type_.avoid = set(''.join(text.get('avoid', [])))
     glyphs = [g for g in text.get('glyphs', []) if type_.covers(g)] or \
         [g for g in PREFERRED_GLYPHS if type_.covers(g)][:6]
     shown = lambda value: value if type_.covers(value.replace(' ', '') or '.') else ''

@@ -77,6 +77,11 @@ class Typesetting(unittest.TestCase):
     def test_a_word_with_a_character_that_the_font_lacks_is_never_chosen(self):
         self.assertEqual(type_with('AB').fit(['ABQ', 'AB'], 400, 100, least=0), 'AB')
 
+    def test_a_word_with_a_character_to_avoid_is_never_chosen(self):
+        font = type_with('ABCD')
+        font.avoid = {'D'}
+        self.assertEqual(font.fit(['ABCD', 'AB'], 256, 128, least=0), 'AB')
+
     def test_a_paragraph_is_broken_at_the_measure(self):
         font = type_with('AB ')
         lines = font.lines('AB AB AB AB AB AB', 200, 64)                 # a character is 32 pixels wide
@@ -153,6 +158,13 @@ class Plot(unittest.TestCase):
         self.assertIn('\t32\t32\t32\t255\t', lines[4])
         self.assertEqual(lines[4].split('\t')[3], '32')                     # 64 pixels are 32 points
 
+
+    def test_the_vertical_canvas_shows_its_lattice_on_the_whole_canvas(self):
+        sheet = sheet_on('vertical')
+        sheet.page()
+        lines = [item for item in sheet.pages[0]['items'] if item[0] == 'line']
+        self.assertEqual(len(lines), 17 + 30)
+        self.assertEqual(sheet_on('portrait').page().pages[0]['items'], [])
 
 class Formats(unittest.TestCase):
     def test_every_default_format_draws_on_each_of_its_canvases_without_a_fault(self):
