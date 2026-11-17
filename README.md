@@ -88,7 +88,7 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
-| `fgtools media [FORMAT ...] [--canvas NAME] [--lattice] [--specimen] [--list] [--copy FORMAT]` | Render the specimens and the marketing media of the project: each format on each of its canvases, into `output/media/`, laid out on the lattice of the typeface and checked. `--specimen` writes the print specimen. See [Specimens and marketing media](#specimens-and-marketing-media). |
+| `fgtools media [FORMAT ...] [--canvas NAME] [--lattice] [--specimen] [--proof] [--list] [--copy FORMAT]` | Render the specimens and the marketing media of the project: each format on each of its canvases, into `output/media/`, laid out on the lattice of the typeface and checked. `--specimen` writes the print specimen, and `--proof` writes the print proof. See [Specimens and marketing media](#specimens-and-marketing-media). |
 | `fgtools site` | Collect the print specimen, `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
@@ -251,8 +251,16 @@ remove them.
 
 `fgtools media` renders the pictures, the carousels and the videos of a font
 for Instagram, TikTok, LinkedIn, X and Mastodon, and `fgtools media
---specimen` writes the print specimen. It needs the `designbot` command, and
-`ffmpeg` for video.
+--specimen` writes the print specimen. `fgtools media --proof` writes the
+print proof, for the designer: the character set, the sizes, reading text,
+spacing, kerning, diacritics, the weight axis, the short lines of
+`sources/proof-samples.toml` and the tables of the Arabic script. Its pages
+are the scripts of `fgtools/media_formats/proofs/`, the same for every font.
+The command needs `designbot`, and `ffmpeg` for video.
+
+A name after the command selects a part: a format, a kind of format
+(`images`, `carousels` or `videos`), or with `--proof` or `--specimen` a
+page. `--canvas` selects one canvas, and `--list` lists every name.
 
 Every picture is laid out on the lattice of the typeface. The numbers are in
 the `[layout]` block of `CONTEXT.md` of the project, and the defaults are the

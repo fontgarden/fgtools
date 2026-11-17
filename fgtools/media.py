@@ -69,6 +69,9 @@ DEFAULTS = HERE / 'media_formats'
 FOLDERS = {'images': 'image', 'carousels': 'carousel', 'videos': 'video'}     # folder: kind
 EXTENSION = {'image': 'png', 'carousel': 'png', 'video': 'mp4'}
 MEDIA = 'documentation/media'
+# The pages of the print proof, in their order: scripts of media_formats/proofs/, and two formats.
+PROOF = ['release', 'character-set', 'sizes', 'reading', 'spacing', 'kerning', 'diacritics', 'weights',
+         'interpolation', 'lines', 'arabic-joining', 'arabic-marks']
 SPECIMEN = ['release', 'text', 'words', 'weights', 'scripts', 'glyph', 'characters']     # the pages, in order
 PREFERRED_GLYPHS = 'aGRg&?nHOoesE25'
 SCRIPTS = {'Latin': (0x41, 0x7A), 'Arabic': (0x627, 0x64A), 'Hebrew': (0x5D0, 0x5EA), 'Greek': (0x391, 0x3C9),
@@ -214,7 +217,17 @@ def make_job(layout, brand, type_, facts):
     glyphs = [g for g in text.get('glyphs', []) if type_.covers(g)] or \
         [g for g in PREFERRED_GLYPHS if type_.covers(g)][:6]
     shown = lambda value: value if type_.covers(value.replace(' ', '') or '.') else ''
+    from fgtools.proof_web import samples as proof_samples
+    samples, _ = proof_samples.read(layout.sources)
+    texts = {}
+    for script in proof_samples.ALPHABETS:
+        sample = ' '.join(paragraph.get('text', '') for paragraph in
+                        samples.get('text', {}).get(script.lower(), {}).get('paragraphs', []))
+        if sample and type_.covers(sample.replace(' ', '')):
+            texts[script] = sample
+    stamp = shown(' '.join(part for part in (f'Version {facts["version"]}', commit(layout.root)) if part))
     return SimpleNamespace(type=type_, brand=brand, facts=facts, family=type_.family, words=words, glyphs=glyphs,
+                           samples=samples, texts=texts, stamp=stamp,
                            description=description(layout), outline=outlines(layout),
                            url=shown(text.get('url', '')), designer=shown(text.get('designer', '')))
 
@@ -387,9 +400,13 @@ def write_index(layout, brand, family, units):
 def outputs(brand, names=None, only_canvas=None):
     """[(format name, format table, canvas name, canvas table)] to render."""
     known, formats = canvases(), brand.get('format', {})
-    for name in names or []:
+    # A name is a format, or a folder: `images`, `carousels` or `videos` is every format of that kind.
+    names = [name for given in names or []
+             for name in ([key for key, table in formats.items() if table['folder'] == given] or [given])]
+    for name in names:
         if name not in formats:
-            raise SystemExit(f'No format `{name}`. Formats: {", ".join(formats) or "none"}.')
+            raise SystemExit(f'No format `{name}`. Formats: {", ".join(formats) or "none"}. '
+                             f'Kinds: {", ".join(FOLDERS)}.')
     found = []
     for name, table in formats.items():
         if names and name not in names:
@@ -402,40 +419,50 @@ def outputs(brand, names=None, only_canvas=None):
     return found
 
 
-def specimen(layout, brand, job, units, colors):
-    """Write the print specimen: the formats on the page canvas, as one PDF."""
+def pages(all_pages, names):
+    """The pages of a book to write: all of them, or the named ones in the order of the book."""
+    unknown = [name for name in names if name not in all_pages]
+    if unknown:
+        raise SystemExit(f'No page `{unknown[0]}`. Pages: {", ".join(all_pages)}.')
+    return [name for name in all_pages if name in names] if names else all_pages
+
+
+def book(layout, brand, job, units, colors, names, title, output):
+    """Write formats on the page canvas as one PDF: the print specimen or the print proof."""
     canvas = canvases()['page']
     sheets, faults = [], []
-    for name in SPECIMEN:
-        table = brand['format'].get(name)
+    for name in names:
+        script = DEFAULTS / 'proofs' / f'{name}.py'
+        table = {'script': script} if script.is_file() else brand['format'].get(name)
         if not table:
             continue
         sheet, reason = compose(table, job, canvas, units, colors, name)
         if sheet is None:
-            print(f'{name}  not in the specimen: {reason}')
+            print(f'{name}  not in the {title}: {reason}')
             continue
         faults += sheet.faults
         sheets.append(sheet)
     if faults:
-        raise SystemExit('The specimen has faults and is not written:\n  ' + '\n  '.join(faults))
+        raise SystemExit(f'The {title} has faults and is not written:\n  ' + '\n  '.join(faults))
     if not sheets:
         raise SystemExit('No format can be drawn yet.')
-    folder = layout.root / 'output/specimen'
-    folder.mkdir(parents=True, exist_ok=True)
-    output = folder / f'{slug(job.family)}-specimen.pdf'
+    output = layout.root / output
+    output.parent.mkdir(parents=True, exist_ok=True)
     result = run_plotter(layout, sheets, output)
     if result.returncode or not output.is_file():
         sys.stderr.write(result.stdout[-2000:] + result.stderr[-4000:])
-        raise SystemExit('DesignBot did not write the specimen.')
+        raise SystemExit(f'DesignBot did not write the {title}.')
     print(f'{output.relative_to(layout.root)}  {sum(len(sheet.pages) for sheet in sheets)} pages')
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='fgtools media', description=__doc__.split('\n')[0])
-    parser.add_argument('formats', nargs='*', help='format names; the default is every format')
+    parser.add_argument('formats', nargs='*', help='names of formats, or `images`, `carousels` or `videos` for each '
+                        'format of that kind; with --proof or --specimen, names of pages. The default is all.')
     parser.add_argument('--canvas', help='one canvas; the default is each canvas of the format')
     parser.add_argument('--lattice', action='store_true', help='draw the lattice and the text area on each picture')
     parser.add_argument('--specimen', action='store_true', help='write the print specimen, one PDF of A4 pages')
+    parser.add_argument('--proof', action='store_true', help='write the print proof, one PDF of A4 pages')
     parser.add_argument('--list', action='store_true', help='list the formats and the canvases, and render nothing')
     parser.add_argument('--copy', metavar='FORMAT', help='copy the default script of a format into the project')
     args = parser.parse_args(argv)
@@ -452,12 +479,14 @@ def main(argv=None):
         shutil.copy(table['script'], target)
         print(f'{target.relative_to(layout.root)}: change it, and `fgtools media {args.copy}` renders your version.')
         return
-    todo = outputs(brand, args.formats, args.canvas)
+    todo = [] if args.proof or args.specimen else outputs(brand, args.formats, args.canvas)
     units = project_layout(layout)
     if args.list:
         for name, table in brand.get('format', {}).items():
             origin = 'script of this project' if table['own'] else 'default script'
             print(f'{name}  {table["kind"]}  {" ".join(table.get("canvases", []))}  ({origin})')
+        print(f'pages of the proof  {" ".join(PROOF)}')
+        print(f'pages of the specimen  {" ".join(SPECIMEN)}')
         for name, canvas in canvases().items():
             grid = media_layout.lattice(canvas, units)
             print(f'canvas {name}  {canvas["width"]} x {canvas["height"]}  text area {grid["text"][2]} x '
@@ -474,7 +503,11 @@ def main(argv=None):
     job = make_job(layout, brand, type_, facts)
     colors = brand_colors(brand)
     if args.specimen:
-        specimen(layout, brand, job, units, colors)
+        book(layout, brand, job, units, colors, pages(SPECIMEN, args.formats), 'specimen',
+             f'output/specimen/{slug(job.family)}-specimen.pdf')
+        return
+    if args.proof:
+        book(layout, brand, job, units, colors, pages(PROOF, args.formats), 'proof', 'output/proof/proof.pdf')
         return
     count, faults = 0, []
     for name, table, canvas_name, canvas in todo:

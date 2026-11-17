@@ -26,6 +26,7 @@ The parts:
 from __future__ import annotations
 
 import math
+import unicodedata
 from pathlib import Path
 
 DEFAULT_LAYOUT = {'unit': 8, 'module': 64, 'sizes': [32, 64, 128, 256, 512, 1024], 'label_size': 24}
@@ -35,7 +36,8 @@ PALETTE = {'ground': (32, 32, 32), 'grid': (64, 64, 64), 'secondary': (128, 128,
 # Paper: the print page has dark ink on a light ground.
 LIGHT = {'ground': (240, 240, 240), 'grid': (192, 192, 192), 'secondary': (128, 128, 128), 'ink': (32, 32, 32),
          'accent': (208, 64, 32)}
-RULE = 2            # pixels: the one line weight
+RULE = 2
+JOINERS = '\u200c\u200d'      # zero width non-joiner and joiner            # pixels: the one line weight
 LABEL_DROP = 16     # pixels from a module line to the cap top of a label
 
 
@@ -60,7 +62,10 @@ def lattice(canvas, layout=None):
 
     col0, text_cols = inside(cols, ox, safe.get('left', 0), width - safe.get('right', 0))
     row0, text_rows = inside(rows, oy, safe.get('top', 0), height - safe.get('bottom', 0))
-    return {'width': width, 'height': height, 'module': module, 'unit': unit, 'sizes': layout['sizes'],
+    # A canvas that is written smaller (the print page) has one size under the scale: 8 points.
+    scale = canvas.get('scale', 1)
+    sizes = list(layout['sizes']) + ([layout['sizes'][0] * scale] if scale < 1 else [])
+    return {'width': width, 'height': height, 'module': module, 'unit': unit, 'sizes': sizes,
             'label_size': layout['label_size'], 'origin': (ox, oy), 'live': (cols, rows),
             'text': (col0, row0, text_cols, text_rows), 'scale': canvas.get('scale', 1),
             'light': canvas.get('theme') == 'light', 'lattice': bool(canvas.get('lattice'))}
@@ -81,7 +86,17 @@ class Type:
         self.avoid = set()          # characters that no chosen word has, for example a draft glyph
 
     def covers(self, text):
-        return bool(text) and all(ord(character) in self.characters for character in text)
+        """True when the font has each character. The joiners need no glyph."""
+        return bool(text) and all(ord(character) in self.characters or character in JOINERS for character in text)
+
+    @staticmethod
+    def right_to_left(text):
+        """True when the first letter of the text is of a script that is written from the right."""
+        for character in text:
+            direction = unicodedata.bidirectional(character)
+            if direction in ('L', 'R', 'AL'):
+                return direction != 'L'
+        return False
 
     def measure(self, text, weight=None, features=()):
         """(advance, ink left, ink right) of a line of text, in parts of the em. The ink values are
@@ -167,7 +182,9 @@ class Sheet:
         self.grid, self.type, self.name = grid, type_, name
         self.colors = dict(LIGHT) if grid.get('light') else {**PALETTE, **(colors or {})}
         self.cols, self.rows = grid['text'][2], grid['text'][3]
-        self.pages, self.faults, self.axis = [], [], False
+        self.pages, self.faults = [], []
+        self.axis = False           # the subject is the weight axis: more than two weights are no fault
+        self.waterfall = False      # the subject is the scale of sizes: more than three sizes are no fault
 
     # positions
     def x(self, col):
@@ -244,6 +261,24 @@ class Sheet:
         return self.text(text, col, row, self.grid['label_size'], self.type.low, color, flush=flush,
                          drop=drop, features=features, free=free)
 
+    def room(self, rows, size, leading):
+        """The number of lines of a size and a leading that stand in a number of modules."""
+        return max(0, int((rows * self.grid['module'] - size) // leading) + 1)
+
+    def paragraph(self, text, col, row, cols, size, leading, weight=None, limit=None, color='ink', drop=0):
+        """Set a text in lines, in `cols` modules from a column line and from a row line down. A text
+        of a script that is written from the right ends its lines at the right edge. Returns the
+        number of modules that the lines take."""
+        module = self.grid['module']
+        lines = self.type.lines(text, cols * module, size, weight)[:limit]
+        if not lines or not self.type.covers(text.replace(' ', '') or '.'):
+            return 0
+        right = self.type.right_to_left(text)
+        for index, line in enumerate(lines):
+            self.text(line, col + cols if right else col, row, size, weight, color,
+                      flush='right' if right else 'left', drop=drop + index * leading)
+        return -(-(drop + (len(lines) - 1) * leading + size) // module)
+
     def header(self, *fields, row=0):
         """A rule and a row of labels on fixed columns. The last field ends at the right edge."""
         self.rule(row)
@@ -286,8 +321,9 @@ class Sheet:
         """The faults of the whole sheet: the rules that concern a page, not one element."""
         for index, page in enumerate(self.pages, 1):
             sizes = page['sizes'] - {self.grid['label_size']}
-            if len(sizes) > 3:
-                self.faults.append(f'{self.name} page {index}: {len(sizes)} type sizes; a picture has at most three')
+            if len(sizes) > 3 and not self.waterfall:
+                self.faults.append(f'{self.name} page {index}: {len(sizes)} type sizes; a picture has at most '
+                                   'three, except when its subject is the scale of sizes')
             if len(page['weights']) > 2 and not self.axis:
                 self.faults.append(f'{self.name} page {index}: {len(page["weights"])} weights; a picture has at '
                                    'most two, except when its subject is the weight axis')

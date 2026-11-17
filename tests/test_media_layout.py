@@ -3,6 +3,7 @@ import tempfile
 import tomllib
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from fgtools import media, media_layout
 
@@ -186,6 +187,57 @@ class Formats(unittest.TestCase):
                 drawn += 1
                 self.assertEqual(sheet.faults, [], f'{name} on {canvas}')
         self.assertGreater(drawn, 12)
+
+
+class Proof(unittest.TestCase):
+    def job(self, characters):
+        from types import SimpleNamespace
+        from fgtools.proof_web import samples
+        font = type_with(characters, family='Test Font')
+        merged, _ = samples.read(Path(tempfile.mkdtemp()))
+        text = ' '.join(paragraph['text'] for paragraph in merged['text']['latin']['paragraphs'])
+        facts = {'version': '1.000', 'glyphs': 70, 'characters': 66, 'instances': [400.0], 'scripts': ['Latin']}
+        return SimpleNamespace(type=font, brand={}, facts=facts, family='Test Font', glyphs=['a', 'G'],
+                               words=tomllib.loads(media.WORDS.read_text()), samples=merged, stamp='',
+                               texts={'Latin': text} if font.covers(text.replace(' ', '')) else {},
+                               description='', outline=lambda character: None, url='', designer='')
+
+    def pages(self, characters):
+        job, drawn = self.job(characters), {}
+        formats = media.load_brand(SimpleNamespace(root=Path(tempfile.mkdtemp())))['format']
+        for name in media.PROOF:
+            script = media.DEFAULTS / 'proofs' / f'{name}.py'
+            table = {'script': script} if script.is_file() else formats[name]
+            sheet, reason = media.compose(table, job, media.canvases()['page'], {}, {}, name)
+            if sheet is not None:
+                self.assertEqual(sheet.faults, [], name)
+                drawn[name] = len(sheet.pages)
+        return drawn
+
+    def test_every_page_of_the_proof_has_a_script(self):
+        formats = media.load_brand(SimpleNamespace(root=Path(tempfile.mkdtemp())))['format']
+        for name in media.PROOF:
+            self.assertTrue((media.DEFAULTS / 'proofs' / f'{name}.py').is_file() or name in formats, name)
+
+    def test_the_proof_of_a_latin_font_has_no_fault(self):
+        drawn = self.pages('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,;:-\u00e9\u00c9')
+        for name in ('character-set', 'sizes', 'reading', 'spacing', 'kerning', 'diacritics', 'lines'):
+            self.assertIn(name, drawn)
+        self.assertNotIn('arabic-joining', drawn)
+
+    def test_the_proof_of_a_font_with_four_letters_has_no_fault(self):
+        self.assertIn('character-set', self.pages('HOno'))
+
+    def test_the_print_page_has_the_size_of_8_points(self):
+        self.assertIn(16, media_layout.lattice(media.canvases()['page'])['sizes'])
+        self.assertNotIn(16, media_layout.lattice(media.canvases()['portrait'])['sizes'])
+
+    def test_a_paragraph_from_the_right_ends_its_lines_at_the_right_edge(self):
+        sheet = sheet_on('page', '\u05d0\u05d1 ')
+        sheet.page()
+        rows = sheet.paragraph('\u05d0\u05d1 \u05d0\u05d1', 0, 1, 4, 32, 48)
+        _, origin, _, size = sheet.pages[0]['items'][0][:4]
+        self.assertEqual((rows, origin), (1, sheet.x(4) - 2.5 * 32))
 
 
 if __name__ == '__main__':
