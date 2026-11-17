@@ -57,5 +57,15 @@ class CheckRepository(unittest.TestCase):
             'README.md:1: make proof'])
 
 
+    def test_a_contents_chapter_lists_every_chapter_in_order(self):
+        text = '# Font\n\n## Contents\n\n- [Grid](#grid)\n- [Latin](#latin)\n\n## Grid\n\n## Latin\n'
+        (self.root / 'CONTEXT.md').write_text(text)
+        self.add()
+        self.assertEqual(check_repository.problems(self.root), [])
+        (self.root / 'CONTEXT.md').write_text(text + '\n```toml\n## not a chapter\n```\n\n## Hebrew\n')
+        self.assertEqual(check_repository.problems(self.root),
+                         ['CONTEXT.md: the contents differ from the chapters (not listed: Hebrew)'])
+
+
 if __name__ == '__main__':
     unittest.main()

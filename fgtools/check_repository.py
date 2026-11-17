@@ -9,6 +9,8 @@
 - No document names a file, a folder or a `make` target that does not exist:
   relative Markdown links, repository paths in backticks, and `make <target>`
   in backticks. A line with the words "in the Git history" is not checked.
+- A document with a chapter `## Contents` lists every other `##` chapter
+  there, as a link with the title of the chapter, in the order of the file.
 
 The layout is the same for every Font.Garden project. Change it here, with
 the reason in the commit message.
@@ -64,6 +66,8 @@ LINK = re.compile(r'\]\(([^)#\s]+)(?:#[^)]*)?\)')
 CODE = re.compile(r'`([^`\s]+)`')
 MAKE = re.compile(r'`make ([a-z][a-z0-9-]*)')
 HISTORY = re.compile(r'Git\s+history', re.I)
+CONTENTS = 'Contents'
+CONTENTS_LINK = re.compile(r'\[([^\]]+)\]\(#[^)]*\)')
 
 
 def tracked(root):
@@ -132,9 +136,34 @@ def reference_problems(root, files):
     return found
 
 
+def contents_problems(root, files):
+    found = []
+    for document in (f for f in files if f.endswith('.md') and not (root / f).is_symlink()):
+        chapters, listed, chapter, in_code = [], [], None, False
+        for line in (root / document).read_text().splitlines():
+            if line.startswith('```'):
+                in_code = not in_code
+            elif in_code:
+                continue
+            elif line.startswith('## '):
+                chapter = line[3:].strip()
+                if chapter != CONTENTS:
+                    chapters.append(chapter)
+            elif chapter == CONTENTS:
+                listed += CONTENTS_LINK.findall(line)
+        if listed != chapters and (listed or CONTENTS in (root / document).read_text()):
+            missing = [c for c in chapters if c not in listed]
+            extra = [c for c in listed if c not in chapters]
+            detail = '; '.join(filter(None, [
+                missing and 'not listed: ' + ', '.join(missing),
+                extra and 'no such chapter: ' + ', '.join(extra)])) or 'the order differs'
+            found.append(f'{document}: the contents differ from the chapters ({detail})')
+    return found
+
+
 def problems(root):
     files = tracked(root)
-    return layout_problems(root, files) + reference_problems(root, files)
+    return layout_problems(root, files) + reference_problems(root, files) + contents_problems(root, files)
 
 
 def main():
