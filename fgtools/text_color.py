@@ -10,8 +10,11 @@ hole. This module gives a model the same two tests.
   `reference-fonts/` gives the range that readers know. A glyph of many
   crossing strokes, for example the number sign, has thinner strokes than H in
   every font, and the ratio shows it.
-- `strip` is a picture: the glyph between control letters and in words, sharp
-  and blurred. `fgtools render` draws it under the glyph.
+- `strip` is a picture: a block of text with the glyph between control
+  letters and in words, sharp and blurred. `fgtools render` draws it under
+  the glyph, beside the same block in the reference font that has the median
+  color. One line of text does not show a difference in weight of a few
+  percent, and a block does.
 
 The number is a filter, as every check: the picture and the designer decide.
 """
@@ -25,12 +28,13 @@ from fgtools import accent_proofs
 # strip. The Arabic letters do not join the next letter, so their isolated
 # forms are correct without shaping.
 CONTROL = {'Latin': 'H', 'Hebrew': 'ה', 'Arabic': 'ا'}
-NEIGHBORS = {'Latin': 'noHO', 'Hebrew': 'הסםר', 'Arabic': 'ادرو'}
-WORDS = {'Latin': ('Hamburgefonstiv', 'minimum', '204'),
+NEIGHBORS = {'Latin': 'HSnoO', 'Hebrew': 'הסםר', 'Arabic': 'ادرو'}
+WORDS = {'Latin': ('Hamburg', 'minimum', '204'),
          'Hebrew': ('שלום', 'עולם', 'אבג'),
          'Arabic': ('دار', 'ورد', 'زار')}
 MEASURE_SCALE = 0.25    # pixels for one unit of a 1024-unit em
-STRIP_SCALE = 0.085
+STRIP_SCALE = 0.06
+LINES = 3               # the lines of the block of text
 BLUR = 60               # the radius of the blur of the strip, in units
 TOLERANCE = 0.03        # a color this far outside the reference range is a finding
 
@@ -116,27 +120,37 @@ def finding(master, comparison):
             f'fonts ({low:.2f} to {high:.2f}). Look at it in text.')
 
 
-def sequence(font, name):
-    """The glyph names of the strip: the glyph between the neighbors, then in words."""
-    script = script_of(name, font.code_points.get(name))
+def median_reference(references, code, script):
+    """(family, font) of the reference font with the median color of the character, or None."""
+    colors = sorted(reference_colors(references, code, script).items(), key=lambda item: item[1])
+    if not colors:
+        return None
+    family = colors[len(colors) // 2][0]
+    return next(item for item in references if item[0] == family)
+
+
+def sequence(font, name, script=None):
+    """The glyph names of one line: the glyph after each neighbor, twice, then with words."""
+    script = script or script_of(name, font.code_points.get(name))
     glyph = lambda character: font.names.get(ord(character))
     names = []
-    for character in NEIGHBORS[script]:
+    for character in NEIGHBORS[script] * 2:
         if glyph(character):
-            names += [glyph(character), name, glyph(character), 'space']
-    names += [name] * 3 + ['space']
+            names += [glyph(character), name]
+    names += ['space']
     first, second, third = WORDS[script]
-    for word in (first, None, second, None, third):
-        names += [name, 'space'] if word is None else [glyph(c) for c in word if glyph(c)] + ['space']
+    for word in (first, second, third):
+        names += [glyph(c) for c in word if glyph(c)] + ['space', name]
     return names[::-1] if script != 'Latin' else names
 
 
-def strip(font, name, top, bottom):
-    """Two arrays of coverage, sharp and blurred: the glyph in a line of text."""
+def strip(font, name, top, bottom, script=None):
+    """Two arrays of coverage, sharp and blurred: the glyph in a block of text.
+    `top` and `bottom` are in the units of the font."""
     import numpy
     from PIL import Image, ImageFilter
     unit = 1024 / font.units_per_em * STRIP_SCALE
-    names = sequence(font, name)
+    names = sequence(font, name, script)
     space = font.advances.get('space', font.units_per_em / 4)
     advance = lambda glyph: space if glyph == 'space' else font.advances.get(glyph, 0)
     margin = 24
@@ -154,5 +168,6 @@ def strip(font, name, top, bottom):
             lo, hi = max(start, 0), min(start + cell, width)
             line[:, lo:hi] = numpy.maximum(line[:, lo:hi], ink[:, lo - start:hi - start])
         x += advance(glyph) * unit
-    blurred = Image.fromarray((line * 255).astype(numpy.uint8)).filter(ImageFilter.GaussianBlur(BLUR * unit))
-    return line, numpy.asarray(blurred, dtype=numpy.float32) / 255
+    block = numpy.vstack([line] * LINES)
+    blurred = Image.fromarray((block * 255).astype(numpy.uint8)).filter(ImageFilter.GaussianBlur(BLUR * unit))
+    return block, numpy.asarray(blurred, dtype=numpy.float32) / 255

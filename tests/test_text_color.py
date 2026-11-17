@@ -52,7 +52,7 @@ class TextColor(unittest.TestCase):
 
     def test_the_strip_sets_the_glyph_between_the_control_letters(self):
         names = text_color.sequence(font(70), 'numbersign')
-        self.assertEqual(names[:4], ['H', 'numbersign', 'H', 'space'])
+        self.assertEqual(names[:4], ['H', 'numbersign', 'H', 'numbersign'])
         sharp, blurred = text_color.strip(font(70), 'numbersign', 800, -200)
         self.assertEqual(sharp.shape, blurred.shape)
         self.assertGreater(sharp.max(), blurred.max() - 0.01)
