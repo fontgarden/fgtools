@@ -1,17 +1,19 @@
 """Render the marketing media of a font project with DesignBot.
 
-A project keeps its media in `documentation/media/`:
+Every project gets the default formats, which are in fgtools
+(`fgtools/media_formats/`): a specimen poster, a release picture, a link card,
+a glyph on the grid, the character set, the scripts of the font and an
+animation of the weight axis. A project changes them in `documentation/media/`:
 
     brand.toml       the colors and the texts of the font
-    formats.toml     one table for each format: its canvases, words, caption and alternative text
-    images/          one DesignBot script (`.rs`) for each format that is one picture
-    carousels/       the formats with several pages
-    videos/          the formats that move
+    formats.toml     optional: other canvases or words, the caption and the alternative text of a
+                     format, and the tables of formats that only this font has
+    images/          optional: a DesignBot script (`.rs`) with the name of a default format
+    carousels/       replaces it; a script with a new name is a new format. The folder says
+    videos/          what a format makes.
 
-A format is one kind of picture, for example a specimen poster or an animation
-of the weight axis. The folder of its script says what it makes. The designer
-changes these files for the style of the font. The canvases (the sizes and the
-safe areas of the platforms) are the same for every font and are in
+A format is one kind of picture. The canvases (the sizes and the safe areas of
+the platforms) are the same for every font and are in
 `fgtools/media_canvases.toml`.
 
     fgtools media                       every format on each of its canvases
@@ -19,6 +21,7 @@ safe areas of the platforms) are the same for every font and are in
     fgtools media --canvas vertical     one canvas
     fgtools media --safe-areas          draw the safe area on each picture
     fgtools media --list                list the formats and the canvases
+    fgtools media --copy weight-axis    copy a default script into the project, to change it
 
 The command gives each script a module `brief` with the canvas, the safe area,
 the family name, the font file, the weight range, the metrics, the colors and
@@ -29,9 +32,11 @@ post of LinkedIn), and a video is an MP4. Beside each output is a JSON record
 with the caption, the alternative text, the size and the commit of the sources.
 `output/media/index.html` is a review page that shows every output.
 
-The command renders nothing when the font has no glyph for a character of
-the texts in brand.toml and formats.toml, because DesignBot would draw it with
-a system font. It does not yet check the text that a script writes itself.
+A font at the start of its design has few glyphs. The media use what it has:
+a text with a character that the font does not have is left out, and when no
+word of brand.toml can be set, the pictures show the letters that exist.
+DesignBot would draw a missing glyph with a system font, and a picture must
+never show another font.
 
 It needs the `designbot` command, and `ffmpeg` for video:
 
@@ -54,6 +59,7 @@ BRIEF = Path(__file__).with_name('media_brief.rs')
 EXTENSION = {'image': 'png', 'carousel': 'png', 'video': 'mp4'}
 FOLDERS = {'images': 'image', 'carousels': 'carousel', 'videos': 'video'}     # folder: kind
 MEDIA = 'documentation/media'
+DEFAULTS = Path(__file__).with_name('media_formats')
 INSTALL = 'cargo install --git https://github.com/eliheuer/designbot designbot-cli'
 
 
@@ -89,22 +95,37 @@ def font_facts(layout):
     return path, family, low, high, cap, metrics
 
 
+def commit(root):
+    result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=root, capture_output=True, text=True)
+    return result.stdout.strip() or None
+
+
+def find_script(folder, name):
+    """(kind folder, path) of the script of a format in a media folder, or None."""
+    found = [(kind_folder, folder / kind_folder / f'{name}.rs') for kind_folder in FOLDERS
+             if (folder / kind_folder / f'{name}.rs').is_file()]
+    if len(found) > 1:
+        raise SystemExit(f'{name}.rs is in two folders of {folder}. Keep one.')
+    return found[0] if found else None
+
+
 def load_brand(layout):
-    """brand.toml with a table `format`: each format of formats.toml with the kind and the script
-    that its folder gives."""
+    """brand.toml with a table `format`: the default formats of fgtools, changed and extended by
+    formats.toml and the scripts of the project. Each format has its kind and its script."""
     folder = layout.root / MEDIA
-    if not (folder / 'brand.toml').is_file():
-        raise SystemExit(f'No {MEDIA}/brand.toml. The project template has a set to start from.')
-    brand = tomllib.loads((folder / 'brand.toml').read_text())
-    formats = tomllib.loads((folder / 'formats.toml').read_text()) if (folder / 'formats.toml').is_file() else {}
+    brand = tomllib.loads((folder / 'brand.toml').read_text()) if (folder / 'brand.toml').is_file() else {}
+    formats = tomllib.loads((DEFAULTS / 'formats.toml').read_text())
+    own = tomllib.loads((folder / 'formats.toml').read_text()) if (folder / 'formats.toml').is_file() else {}
+    for name, table in own.items():
+        formats.setdefault(name, {}).update(table)
     for name, table in formats.items():
-        found = [(kind_folder, kind) for kind_folder, kind in FOLDERS.items()
-                 if (folder / kind_folder / f'{name}.rs').is_file()]
-        if len(found) != 1:
+        found = find_script(folder, name) or find_script(DEFAULTS, name)
+        if not found:
             places = ', '.join(f'{MEDIA}/{kind_folder}/' for kind_folder in FOLDERS)
             raise SystemExit(f'formats.toml names the format `{name}`. Its script {name}.rs must be in one of {places}.')
-        table['folder'], table['kind'] = found[0]
-        table['script'] = folder / found[0][0] / f'{name}.rs'
+        table['folder'], table['script'] = found
+        table['kind'] = FOLDERS[found[0]]
+        table['own'] = folder in found[1].parents
     scripts = {path.stem for kind_folder in FOLDERS for path in (folder / kind_folder).glob('*.rs')}
     for name in sorted(scripts - set(formats)):
         print(f'{name}.rs has no table in formats.toml and is not rendered.', file=sys.stderr)
@@ -112,21 +133,50 @@ def load_brand(layout):
     return brand
 
 
-def missing_characters(brand, facts):
-    """The characters of the texts of the project that the font has no glyph for. DesignBot draws
-    such a character with a system font, and a picture of another font is worse than no picture."""
+PREFERRED_GLYPHS = 'aGRg&?nHOoesE25'
+
+
+def character_map(facts):
+    """The code points that the font has a glyph for."""
     from fontTools.ttLib import TTFont
-    covered = TTFont(facts[0], lazy=True).getBestCmap()
-    text = brand.get('text', {})
-    words = [word for table in brand.get('format', {}).values() for word in table.get('words', [])]
-    used = ''.join([facts[1], text.get('tagline', ''), text.get('designer', ''), text.get('url', ''),
-                    *text.get('words', []), *words])
-    return sorted({character for character in used if ord(character) not in covered})
+    with TTFont(facts[0], lazy=True) as font:
+        return set(font.getBestCmap())
 
 
-def commit(root):
-    result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=root, capture_output=True, text=True)
-    return result.stdout.strip() or None
+def texts(brand, table, facts):
+    """The texts that a format draws, limited to what the font can set. A project names them in
+    formats.toml as a list, or the table names a list of brand.toml: words, glyphs or lines."""
+    covered = character_map(facts)
+    can_set = lambda text: bool(text.strip()) and all(ord(character) in covered for character in text)
+    text, source = brand.get('text', {}), table.get('words', 'words')
+    letters = [chr(code) for code in sorted(covered) if chr(code).isalnum()]
+    if isinstance(source, list):
+        chosen = [item for item in source if can_set(item)]
+        source = 'words' if all(len(item) > 1 for item in source) else 'glyphs'
+    else:
+        chosen = [item for item in text.get(source, []) if can_set(item)]
+    if chosen:
+        return chosen
+    if source == 'glyphs':
+        return [c for c in PREFERRED_GLYPHS if can_set(c)][:6] or letters[:6]
+    if source == 'lines' and can_set(facts[1]):
+        return [facts[1]]
+    words = [word for word in text.get('words', []) + facts[1].split() if can_set(word)]
+    # No word can be set: show the letters that exist, capitals first.
+    capitals = ''.join(c for c in letters if c.isupper())[:6]
+    small = ''.join(c for c in letters if c.islower())[:6]
+    return words[:3] or [group for group in (capitals, small) if group] or [''.join(letters[:6])]
+
+
+def charset(facts):
+    """The characters of the font as ranges of hexadecimal code points, for the brief."""
+    codes, ranges = sorted(character_map(facts)), []
+    for code in codes:
+        if ranges and code == ranges[-1][1] + 1:
+            ranges[-1][1] = code
+        else:
+            ranges.append([code, code])
+    return ','.join(f'{low:x}-{high:x}' for low, high in ranges)
 
 
 def outputs(layout, brand, names=None, only_canvas=None):
@@ -147,7 +197,7 @@ def outputs(layout, brand, names=None, only_canvas=None):
     return found
 
 
-def arguments(brand, table, canvas, facts, output, safe_areas):
+def arguments(brand, table, canvas, facts, output, safe_areas, characters=''):
     """The key=value arguments that the module `brief` of a script reads."""
     path, family, low, high, cap, metrics = facts
     colors, text, safe = brand.get('colors', {}), brand.get('text', {}), canvas['safe']
@@ -158,7 +208,7 @@ def arguments(brand, table, canvas, facts, output, safe_areas):
         'ground': colors.get('ground', '#282828'), 'ink': colors.get('ink', '#bebebe'),
         'accent': colors.get('accent', '#e8c547'),
         'tagline': text.get('tagline', ''), 'designer': text.get('designer', ''), 'url': text.get('url', ''),
-        'words': '|'.join(table.get('words') or text.get('words') or [family]),
+        'words': '|'.join(texts(brand, table, facts)), 'charset': characters or charset(facts),
         'overlay': int(bool(safe_areas)), 'output': output,
         'upm': metrics['upm'], 'x_height': f'{metrics["x_height"]:.4f}',
         'ascender': f'{metrics["ascender"]:.4f}', 'descender': f'{metrics["descender"]:.4f}',
@@ -309,13 +359,26 @@ def main(argv=None):
     parser.add_argument('--canvas', help='one canvas; the default is each canvas of the format')
     parser.add_argument('--safe-areas', action='store_true', help='draw the safe area of the canvas on each picture')
     parser.add_argument('--list', action='store_true', help='list the formats and the canvases, and render nothing')
+    parser.add_argument('--copy', metavar='FORMAT', help='copy the default script of a format into the project')
     args = parser.parse_args(argv)
     layout = project.load()
     brand = load_brand(layout)
+    if args.copy:
+        table = brand['format'].get(args.copy)
+        if not table:
+            raise SystemExit(f'No format `{args.copy}`. Formats: {", ".join(brand["format"])}.')
+        target = layout.root / MEDIA / table['folder'] / f'{args.copy}.rs'
+        if target.is_file():
+            raise SystemExit(f'{target.relative_to(layout.root)} exists already.')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(table['script'], target)
+        print(f'{target.relative_to(layout.root)}: change it, and `fgtools media {args.copy}` renders your version.')
+        return
     todo = outputs(layout, brand, args.formats, args.canvas)
     if args.list:
         for name, table in brand.get('format', {}).items():
-            print(f'{name}  {table["kind"]}  {" ".join(table.get("canvases", []))}')
+            origin = 'script of this project' if table['own'] else 'default script'
+            print(f'{name}  {table["kind"]}  {" ".join(table.get("canvases", []))}  ({origin})')
         for name, canvas in canvases().items():
             print(f'canvas {name}  {canvas["width"]} x {canvas["height"]}  {canvas["use"]}')
         return
@@ -324,16 +387,23 @@ def main(argv=None):
     if any(table['kind'] == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
         raise SystemExit('A video format needs the `ffmpeg` command, which is not on PATH.')
     facts = font_facts(layout)
-    missing = missing_characters(brand, facts)
-    if missing:
-        print(f'Nothing rendered: the font has no glyph for {len(missing)} characters of the texts in brand.toml and formats.toml: '
-              f'{" ".join(missing[:40])}\nDraw them, or change the texts.')
+    covered = character_map(facts)
+    if not any(chr(code).isalnum() for code in covered):
+        print('Nothing rendered: the font has no letter and no figure yet.')
         return
+    text = brand.get('text', {})
+    for key in ('tagline', 'designer', 'url'):
+        missing = sorted({c for c in text.get(key, '') if ord(c) not in covered})
+        if missing:
+            print(f'The {key} of brand.toml is left out: the font has no glyph for {" ".join(missing[:30])}')
     script = program(layout, brand)
     count = 0
     for name, table, canvas_name, canvas in todo:
         if table.get('needs_weight_axis') and facts[2] == facts[3]:
             print(f'{name}  {canvas_name}  not rendered: the font has one weight')
+            continue
+        if table.get('needs_family_name') and any(ord(c) not in covered for c in facts[1]):
+            print(f'{name}  {canvas_name}  not rendered: the font cannot set its name, {facts[1]}, yet')
             continue
         count += 1
         files = render(layout, brand, script, name, table, canvas_name, canvas, facts, args.safe_areas)

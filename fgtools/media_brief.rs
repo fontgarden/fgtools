@@ -37,6 +37,8 @@ mod brief {
         pub words: Vec<String>,
         pub overlay: bool,
         pub output: String,
+        /// The ranges of the characters that the font has.
+        pub charset: Vec<(u32, u32)>,
     }
 
     fn color(text: &str) -> Color {
@@ -82,6 +84,10 @@ mod brief {
             words: get("words").split('|').map(String::from).collect(),
             overlay: get("overlay") == "1",
             output: get("output"),
+            charset: get("charset").split(',').filter(|r| !r.is_empty()).map(|r| {
+                let (low, high) = r.split_once('-').unwrap_or((r, r));
+                (u32::from_str_radix(low, 16).unwrap(), u32::from_str_radix(high, 16).unwrap())
+            }).collect(),
         }
     }
 
@@ -94,6 +100,24 @@ mod brief {
             let mut renderer = Renderer::new(self.width as u32, self.height as u32);
             renderer.load_font(&self.font).expect("the built font of the project");
             renderer
+        }
+
+        /// True when the font has a glyph for each character of the text.
+        pub fn covers(&self, text: &str) -> bool {
+            text.chars().all(|c| self.charset.iter().any(|(low, high)| (*low..=*high).contains(&(c as u32))))
+        }
+
+        /// The characters of the text that the font has.
+        pub fn covered(&self, text: &str) -> String {
+            text.chars().filter(|c| self.covers(&c.to_string())).collect()
+        }
+
+        /// Draw text, only when the font has every character of it. DesignBot draws a missing
+        /// glyph with a system font, and a picture must never show another font.
+        pub fn text(&self, ctx: &mut Canvas, text: &str, x: f64, y: f64) {
+            if !text.is_empty() && self.covers(text) {
+                ctx.text(text, x, y);
+            }
         }
 
         /// The weight at a position from 0 (lightest) to 1 (heaviest).

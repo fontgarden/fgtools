@@ -88,7 +88,7 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
-| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list]` | Render the marketing media of the project with DesignBot: each format of `documentation/media/formats.toml` on each of its canvases, into `output/media/`. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
+| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list] [--copy FORMAT]` | Render the marketing media of the project with DesignBot: each format on each of its canvases, into `output/media/`. The default formats are in fgtools, and `documentation/media/` of the project changes them. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
 | `fgtools site` | Collect `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
@@ -126,7 +126,7 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.render_glyphs` | `render` |
 | `fgtools.measure_picture` | `measure-picture` |
 | `fgtools.site` | `site` |
-| `fgtools.media` | `media`. The canvases are in `fgtools/media_canvases.toml`, and the module that each script gets is `fgtools/media_brief.rs`. |
+| `fgtools.media` | `media`. The canvases are in `fgtools/media_canvases.toml`, the default formats in `fgtools/media_formats/`, and the module that each script gets is `fgtools/media_brief.rs`. |
 | `fgtools.text_color` | the color of a glyph in text, for `render` and `check-design` |
 | `fgtools.edit_glyph` | `edit` |
 | `fgtools.diff` | `diff` |
@@ -252,21 +252,28 @@ remove them.
 Instagram, TikTok, LinkedIn, X and Mastodon. It needs the `designbot` command, and `ffmpeg` for
 video.
 
-The work is in two parts. The part that is the same for every font is in
-fgtools: the canvases with their safe areas (`fgtools/media_canvases.toml`)
-and the runner. The part that a designer changes for the style of a font is
-in the project, in `documentation/media/`:
+Every project gets the default formats, which are in fgtools
+(`fgtools/media_formats/`): a specimen poster, a release picture, a link card,
+a glyph on the grid, the character set, the scripts of the font and an
+animation of the weight axis. The canvases with their safe areas
+(`fgtools/media_canvases.toml`) and the runner are in fgtools too. An
+improvement of a default format reaches every font with the next version of
+fgtools.
+
+A project changes the media for the style of its font in
+`documentation/media/`:
 
 | File | Content |
 | --- | --- |
-| `brand.toml` | The colors and the texts of the font. |
-| `formats.toml` | One table for each format: its canvases, its words, its caption and its alternative text. |
-| `images/<format>.rs` | The DesignBot script of a format that is one picture. It holds the layout only. |
-| `carousels/<format>.rs` | The script of a format with several pages. |
-| `videos/<format>.rs` | The script of a format that moves. |
+| `brand.toml` | The colors and the texts of the font. A new font needs only this file. |
+| `formats.toml` | Optional. A table with the name of a format gives it other canvases or words, a caption and an alternative text. A table with a new name is a format of this font. |
+| `images/<format>.rs`, `carousels/<format>.rs`, `videos/<format>.rs` | Optional. A DesignBot script with the name of a default format replaces it; `fgtools media --copy <format>` copies the default script to start from. The folder says what the format makes. |
 
-The folder of a script says what the format makes, and the rendered files are
-in a folder with the same name.
+A font at the start of its design has few glyphs, and the media use what it
+has. A text with a character that the font does not have is left out, a
+format that needs the family name is not rendered before the font can set it,
+and a font that can set no word of `brand.toml` shows the letters that exist.
+A picture never shows a system font.
 
 The command adds the module `brief` to each script. It gives the script the
 canvas, the safe area, the family name, the font file, the weight range, the
