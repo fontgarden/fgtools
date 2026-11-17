@@ -114,30 +114,64 @@ def arguments(brand, table, canvas, facts, output, safe_areas):
     return [f'{key}={value}' for key, value in values.items()]
 
 
-def render(layout, brand, name, table, canvas_name, canvas, facts, safe_areas=False):
+def program(layout, brand):
+    """Write one DesignBot script that holds every format of the project, and return its path.
+    DesignBot compiles a script once for each path, so one script for all formats is compiled
+    once, and a change to one format compiles in a few seconds."""
+    build = layout.root / 'output/media/.build'
+    build.mkdir(parents=True, exist_ok=True)
+    names = list(brand.get('format', {}))
+    parts = []
+    for index, name in enumerate(names):
+        source = (layout.root / 'documentation/media' / f'{name}.rs').read_text()
+        if 'fn main()' not in source:
+            raise SystemExit(f'documentation/media/{name}.rs has no `fn main()`.')
+        source = source.replace('//!', '//').replace('fn main()', 'pub fn main()', 1)
+        parts.append(f'#[allow(dead_code)]\nmod format_{index} {{\nuse crate::brief;\n{source}\n}}\n')
+    arms = ''.join(f'        "{name}" => format_{index}::main(),\n' for index, name in enumerate(names))
+    parts.append('fn main() {\n    let name = std::env::args().find_map(|a| a.strip_prefix("format=").map(String::from))'
+                 '.expect("run the script with `fgtools media`");\n    match name.as_str() {\n' + arms +
+                 '        other => panic!("no format {other}"),\n    }\n}\n')
+    text = '\n'.join(parts) + BRIEF.read_text()
+    script = build / 'media.rs'
+    if not script.is_file() or script.read_text() != text:      # an unchanged script is not compiled again
+        script.write_text(text)
+    return script
+
+
+def add_silence(path):
+    """Give a video a silent audio track: Instagram and X specify audio settings for every video."""
+    silent = path.with_name(path.stem + '.audio.mp4')
+    result = subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', str(path), '-f', 'lavfi', '-i',
+                             'anullsrc=r=48000:cl=stereo', '-shortest', '-c:v', 'copy', '-c:a', 'aac',
+                             '-b:a', '128k', '-movflags', '+faststart', str(silent)], capture_output=True, text=True)
+    if result.returncode:
+        silent.unlink(missing_ok=True)
+        raise SystemExit(f'{path.name}: ffmpeg did not add the audio track.\n{result.stderr[-1000:]}')
+    silent.replace(path)
+
+
+def render(layout, brand, script, name, table, canvas_name, canvas, facts, safe_areas=False):
     """Render one format on one canvas. Returns the list of the files written."""
     kind = table.get('kind', 'image')
     folder = layout.root / 'output/media' / name
-    build = layout.root / 'output/media/.build'
     folder.mkdir(parents=True, exist_ok=True)
-    build.mkdir(parents=True, exist_ok=True)
-    script = build / f'{name}.rs'
-    text = (layout.root / 'documentation/media' / f'{name}.rs').read_text() + '\n' + BRIEF.read_text()
-    if not script.is_file() or script.read_text() != text:      # an unchanged script is not compiled again
-        script.write_text(text)
     stem = f'{slug(facts[1])}_{name}_{canvas_name}' + ('_safe-areas' if safe_areas else '')
     written = []
     for extension in [EXTENSION[kind]] + (['pdf'] if kind == 'carousel' else []):
         output = folder / f'{stem}.{extension}'
+        output.unlink(missing_ok=True)
         for old in folder.glob(f'{stem}_[0-9][0-9][0-9][0-9].{extension}'):
             old.unlink()
-        command = ['designbot', str(script), '--output', str(output), '--',
+        command = ['designbot', str(script), '--output', str(output), '--', f'format={name}',
                    *arguments(brand, table, canvas, facts, output, safe_areas)]
         result = subprocess.run(command, cwd=layout.root, capture_output=True, text=True)
         files = [output] if output.is_file() else sorted(folder.glob(f'{stem}_[0-9][0-9][0-9][0-9].{extension}'))
         if result.returncode or not files:
             sys.stderr.write(result.stdout[-2000:] + result.stderr[-4000:])
             raise SystemExit(f'{name} on {canvas_name}: DesignBot did not write {output.name}.')
+        if extension == 'mp4':
+            add_silence(output)
         written += files
     record = {'format': name, 'kind': kind, 'canvas': canvas_name, 'width': canvas['width'],
               'height': canvas['height'], 'family': facts[1], 'commit': commit(layout.root),
@@ -171,10 +205,16 @@ def main(argv=None):
     if any(table.get('kind') == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
         raise SystemExit('A video format needs the `ffmpeg` command, which is not on PATH.')
     facts = font_facts(layout)
+    script = program(layout, brand)
+    count = 0
     for name, table, canvas_name, canvas in todo:
-        files = render(layout, brand, name, table, canvas_name, canvas, facts, args.safe_areas)
+        if table.get('needs_weight_axis') and facts[2] == facts[3]:
+            print(f'{name}  {canvas_name}  not rendered: the font has one weight')
+            continue
+        count += 1
+        files = render(layout, brand, script, name, table, canvas_name, canvas, facts, args.safe_areas)
         print(f'{name}  {canvas_name}  {files[0].relative_to(layout.root)}' + (f'  (+{len(files) - 1})' if len(files) > 1 else ''))
-    print(f'{len(todo)} outputs in output/media/')
+    print(f'{count} outputs in output/media/')
 
 
 if __name__ == '__main__':
