@@ -201,7 +201,7 @@ def main(argv=None, prog=None):
     url = f'http://127.0.0.1:{args.port}/'
     identity = server_identity(source.root, folder, cache is not None)
     if matching_server(url, fonts, identity):
-        print(f'The same proof is already served at {url}')
+        print(f'The same proof is already served.\nOpen: {url}')
         return 0
     try:
         server = ThreadingHTTPServer(('127.0.0.1', args.port), handler(folder, identity, cache))
@@ -210,7 +210,7 @@ def main(argv=None, prog=None):
                        'If an older proof of this project uses the port, stop it and run the command again. '
                        'Use --port for a separate proof.\n')
     served = 'the current build' if args.current else str(folder if args.directory else snapshot)
-    print(f'Web proof: {url}\nServing {served}. Ctrl-C stops the server.', flush=True)
+    print(f'Open: {url}\nServing {served}. Ctrl-C stops the server.', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

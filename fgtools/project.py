@@ -26,6 +26,12 @@ class ProjectError(LookupError):
     """The project or one of its source files is missing or not valid."""
 
 
+def show(path):
+    """Print the last line of a command that writes a file to look at: the file as a link that a terminal opens."""
+    path = str(path)
+    print(f'Open: {path if path.startswith("http") else Path(path).resolve().as_uri()}')
+
+
 def find_root(start=None):
     """The nearest directory, from `start` upward, that contains sources/config.yaml."""
     start = Path.cwd() if start is None else Path(start)

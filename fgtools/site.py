@@ -73,6 +73,7 @@ def main(argv=None):
         print('output/site/ has only the index: run `make proof` and `make media` first.')
     for path, text in parts:
         print(f'output/site/{path}  {text}')
+    project.show(layout.root / 'output/site/index.html')
 
 
 if __name__ == '__main__':

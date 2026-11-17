@@ -453,6 +453,7 @@ def book(layout, brand, job, units, colors, names, title, output):
         sys.stderr.write(result.stdout[-2000:] + result.stderr[-4000:])
         raise SystemExit(f'DesignBot did not write the {title}.')
     print(f'{output.relative_to(layout.root)}  {sum(len(sheet.pages) for sheet in sheets)} pages')
+    project.show(output)
 
 
 def main(argv=None):
@@ -523,7 +524,8 @@ def main(argv=None):
         files = render(layout, name, table, canvas_name, canvas, sheet, type_.family, '_lattice' if args.lattice else '')
         print(f'{name}  {canvas_name}  {files[0].relative_to(layout.root)}' + (f'  (+{len(files) - 1})' if len(files) > 1 else ''))
     index = write_index(layout, brand, type_.family, units)
-    print(f'{count} outputs in output/media/. The review page is {index.relative_to(layout.root)}')
+    print(f'{count} outputs in output/media/.')
+    project.show(index)
     if faults:
         raise SystemExit('Faults of the layout:\n  ' + '\n  '.join(faults))
 

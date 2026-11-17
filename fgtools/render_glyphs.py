@@ -249,7 +249,7 @@ def render(names, masters=None, beside=(), base='main', out=None, root=None):
         out = Path(out) if out else layout.root / 'output/render' / ('-'.join(names)[:60] + '.png')
         out.parent.mkdir(parents=True, exist_ok=True)
         image.save(out)
-    print(out)
+    project.show(out)
     return out
 
 

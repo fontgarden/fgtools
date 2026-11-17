@@ -103,6 +103,7 @@ def main():
         new = build_fonts(source.config_path, temporary / 'new', quiet=True)
         old_by_name = {font.name: font for font in old}
         changed = False
+        pages = []
         print(f'{labels[0]} -> {labels[1]}')
         for font in new:
             if font.name not in old_by_name:
@@ -113,8 +114,11 @@ def main():
             changed |= images
             print(f'{font.name}: output/diff/{font.stem}/')
             print('\n'.join(lines))
+            pages.extend(sorted(output.glob('*.html'))[:1])
         for name in sorted(set(old_by_name) - {font.name for font in new}):
             print(f'{name}: only in {labels[0]}')
+    for page in pages:
+        project.show(page)
     return 1 if changed else 0
 
 

@@ -317,6 +317,9 @@ the sources. `output/media/index.html` shows every output. The print specimen
 is `output/specimen/<family>-specimen.pdf`: the formats on A4 pages, at half
 size, with dark ink on a light ground. Git ignores `output/`.
 
+The last line of `media`, `render`, `diff` and `proof-web` is `Open:` and the
+file or address to look at. Most terminals open it with a Command-click.
+
 ## Web proof
 
 `fgtools proof-web --current` serves the current build beside the fonts in
