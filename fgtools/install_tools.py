@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Install the pinned fontc and Fontspector binaries next to this Python.
+"""Install the pinned fontc, Fontspector and DesignBot binaries next to this Python.
 
-The binaries are the official release archives, checked against the SHA-256
-checksums below. Change a version and its checksums in one commit.
+fontc and Fontspector are the official release archives, checked against the
+SHA-256 checksums below. Change a version and its checksums in one commit.
+DesignBot has no release archive: Cargo compiles it from the pinned commit of
+its repository. This needs the `cargo` command, and on Linux the fontconfig
+headers. A second run with the same commit does not compile it again.
 
     fgtools install-tools
 """
@@ -11,7 +14,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import os
 import platform
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -45,6 +50,22 @@ TOOLS = {
     },
 }
 
+# Tools that Cargo compiles from a commit of their repository: the repository,
+# the commit and the package.
+CARGO_TOOLS = {
+    'designbot': {
+        'repository': 'https://github.com/eliheuer/designbot',
+        'commit': 'd723b6b891c9a9c7e5d79790738134bc2d0ce765',
+        'package': 'designbot-cli',
+    },
+}
+
+# Commands that the tools use and that a package manager installs.
+SYSTEM_COMMANDS = {
+    'ffmpeg': 'brew install ffmpeg, or apt-get install ffmpeg (the video formats of fgtools media need it)',
+    'runebender': 'cargo install --locked --git https://github.com/fontgarden/runebender runebender',
+}
+
 
 def install(name, destination):
     tool = TOOLS[name]
@@ -69,12 +90,27 @@ def install(name, destination):
     subprocess.run([str(path), '--version'], check=True)
 
 
+def install_with_cargo(name, destination):
+    tool = CARGO_TOOLS[name]
+    if shutil.which('cargo') is None:
+        sys.exit(f'{name} is compiled with Cargo, and the `cargo` command is not installed. '
+                 'Install Rust from https://rustup.rs, then run `make setup` again.')
+    subprocess.run(['cargo', 'install', '--locked', '--git', tool['repository'], '--rev', tool['commit'],
+                    '--root', str(destination.parent), tool['package']], check=True,
+                   env=dict(os.environ, PATH=os.pathsep.join([str(destination), os.environ.get('PATH', '')])))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     parser.parse_args()
     destination = Path(sys.executable).parent
     for name in TOOLS:
         install(name, destination)
+    for name in CARGO_TOOLS:
+        install_with_cargo(name, destination)
+    for name, line in SYSTEM_COMMANDS.items():
+        if shutil.which(name) is None:
+            print(f'{name} is not installed. Install it with: {line}')
 
 
 if __name__ == '__main__':

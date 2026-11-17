@@ -50,7 +50,7 @@ COMMANDS = {
     'customize': ('customize', [], 'Rename a project made from the Font.Garden project template'),
     'fetch-reference-fonts': ('reference_fonts', [],
                               'Download the shared OFL reference fonts from Google Fonts'),
-    'install-tools': ('install_tools', [], 'Install the pinned fontc and Fontspector binaries'),
+    'install-tools': ('install_tools', [], 'Install the pinned fontc, Fontspector and DesignBot binaries'),
 }
 
 

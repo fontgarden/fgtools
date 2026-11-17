@@ -29,7 +29,11 @@ environment of the font project:
 ```
 
 `install-tools` installs the pinned fontc and Fontspector release binaries
-into the same environment, after a check of their SHA-256 checksums. `build`
+into the same environment, after a check of their SHA-256 checksums. It also
+compiles DesignBot from a pinned commit with Cargo, which needs the `cargo`
+command and, on Linux, the fontconfig headers. A second run skips a tool that
+is already installed at its pinned version. It names `ffmpeg` and `runebender`
+if they are missing. `build`
 and `diff` also need `gftools`, from the requirements of the project.
 `check-design` and `check-changes --proof` need the Runebender binary. Set
 `RUNEBENDER` to its path if it is not on `PATH`.
@@ -95,10 +99,10 @@ be the top level of its Git repository.
 | `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
 | `fgtools diff [--base REV \| --fontmake]` | Build the sources of the working tree and of `REV` (default `main`), or with fontc and fontmake, and compare the builds with diffenator3. HTML reports go to `output/diff/`. Exit status 1 when a glyph or word image differs. |
 | `fgtools customize --family NAME --designer NAME --email ADDRESS [--repository URL]` | Rename a project made from the [project template](https://github.com/fontgarden/font-project-template): the family name in the sources, the documents and the file names. |
-| `fgtools install-tools` | Install the pinned fontc and Fontspector binaries next to the Python of the environment. |
+| `fgtools install-tools` | Install the pinned fontc, Fontspector and DesignBot binaries next to the Python of the environment. |
 | `fgtools proof-web [--current \| --snapshot DIR \| --directory DIR] [--port N] [--check]` | Serve the font beside `reference-fonts/` in a browser. See [Web proof](#web-proof). |
 | `fgtools proof-web prepare --comparison FILE --output-dir DIR` | Prepare a Before and Candidate snapshot from fixed font files. |
-| `fgtools proof-web render-detail --text TEXT --weight N --output FILE` | A DesignBot PNG of one sample in each font of the proof. Needs the `designbot` command. |
+| `fgtools proof-web render-detail --text TEXT --weight N --output FILE` | A DesignBot PNG of one sample in each font of the proof. Needs DesignBot, from `install-tools`. |
 
 `fgtools COMMAND --help` lists the arguments of a command. Each command
 runs one module, so `python -m fgtools.status --print` is the same as

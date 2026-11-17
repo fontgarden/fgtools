@@ -54,8 +54,9 @@ def main(argv=None, prog=None):
     args = parser.parse_args(argv)
     if not 8 <= args.size <= 512:
         parser.error('The size must be between 8 and 512 px/em')
-    if shutil.which('designbot') is None:
-        parser.exit(1, 'render-detail needs the `designbot` command, which is not on PATH. '
+    from fgtools.media import designbot
+    if designbot() is None:
+        parser.exit(1, 'render-detail needs the `designbot` command. `fgtools install-tools` installs it. '
                        'The web proof works without it.\n')
     root = (args.proof_dir or project.load().root / 'output/proof-web/live').resolve()
     manifest = json.loads((root / 'live-fonts.json').read_text())
@@ -63,7 +64,7 @@ def main(argv=None, prog=None):
     axis = after.get('axes', {}).get('wght')
     if axis and not axis[0] <= args.weight <= axis[2]:
         parser.error(f'The weight must be between {axis[0]:g} and {axis[2]:g}')
-    command = ['designbot', '--raw', str(RECIPE), '--output', str(args.output.resolve()), '--',
+    command = [designbot(), '--raw', str(RECIPE), '--output', str(args.output.resolve()), '--',
                str(args.weight), str(args.size), args.text, args.title, str(root / after['url']),
                after['family']]
     required = {ord(c) for c in args.text if not c.isspace() and ord(c) not in INVISIBLE}

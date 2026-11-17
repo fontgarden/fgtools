@@ -44,9 +44,8 @@ start of its design has few glyphs, and the formats use what it has: a text
 with a character that the font does not have is left out, and a picture never
 shows a system font.
 
-It needs the `designbot` command, and `ffmpeg` for video:
-
-    cargo install --git https://github.com/eliheuer/designbot designbot-cli
+It needs DesignBot, which `fgtools install-tools` compiles from a pinned
+commit, and `ffmpeg` for video.
 """
 from __future__ import annotations
 
@@ -76,7 +75,13 @@ SPECIMEN = ['release', 'text', 'words', 'weights', 'scripts', 'glyph', 'characte
 PREFERRED_GLYPHS = 'aGRg&?nHOoesE25'
 SCRIPTS = {'Latin': (0x41, 0x7A), 'Arabic': (0x627, 0x64A), 'Hebrew': (0x5D0, 0x5EA), 'Greek': (0x391, 0x3C9),
            'Cyrillic': (0x410, 0x44F)}
-INSTALL = 'cargo install --git https://github.com/eliheuer/designbot designbot-cli'
+INSTALL = 'make setup, which runs `fgtools install-tools`'
+
+
+def designbot():
+    """The DesignBot that `fgtools install-tools` put next to this Python, or else the one on PATH."""
+    from fgtools.build_source_snapshot import tool_path
+    return shutil.which('designbot', path=tool_path())
 
 
 def slug(text):
@@ -284,7 +289,7 @@ def run_plotter(layout, sheets, output):
         plotter.write_text(PLOTTER.read_text())
     plot_file = build / f'{output.stem}.{output.suffix[1:]}.plot'
     media_layout.plot(sheets, output, plot_file)
-    result = subprocess.run(['designbot', str(plotter), '--output', str(output), '--', f'plot={plot_file}'],
+    result = subprocess.run([designbot(), str(plotter), '--output', str(output), '--', f'plot={plot_file}'],
                             cwd=layout.root, capture_output=True, text=True)
     return result
 
@@ -493,8 +498,8 @@ def main(argv=None):
             print(f'canvas {name}  {canvas["width"]} x {canvas["height"]}  text area {grid["text"][2]} x '
                   f'{grid["text"][3]} modules  {canvas["use"]}')
         return
-    if shutil.which('designbot') is None:
-        raise SystemExit(f'`fgtools media` needs the `designbot` command, which is not on PATH. Install it:\n  {INSTALL}')
+    if designbot() is None:
+        raise SystemExit(f'`fgtools media` needs DesignBot, which is not installed. Install it with {INSTALL}.')
     if any(table['kind'] == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
         raise SystemExit('A video format needs the `ffmpeg` command, which is not on PATH.')
     type_, facts = font_type(layout)
