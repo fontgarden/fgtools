@@ -48,6 +48,24 @@ class Media(unittest.TestCase):
         self.assertEqual((values['family'], values['weight'], values['words']), ('A Font', '400,700', 'Grid|Type'))
         self.assertEqual((values['ground'], values['overlay']), ('#000000', '1'))
 
+    def test_a_character_without_a_glyph_is_reported(self):
+        from fontTools.fontBuilder import FontBuilder
+        from fontTools.pens.ttGlyphPen import TTGlyphPen
+        path = Path(tempfile.mkdtemp()) / 'Font-Regular.ttf'
+        builder = FontBuilder(1000, isTTF=True)
+        builder.setupGlyphOrder(['.notdef', 'A', 'space'])
+        builder.setupCharacterMap({ord('A'): 'A', ord(' '): 'space'})
+        builder.setupGlyf({name: TTGlyphPen(None).glyph() for name in ['.notdef', 'A', 'space']})
+        builder.setupHorizontalMetrics({name: (500, 0) for name in ['.notdef', 'A', 'space']})
+        builder.setupHorizontalHeader()
+        builder.setupNameTable({'familyName': 'A A', 'styleName': 'Regular'})
+        builder.setupOS2()
+        builder.setupPost()
+        builder.save(path)
+        facts = (path, 'A A', 400.0, 400.0, 0.7)
+        self.assertEqual(media.missing_characters({'text': {'words': ['AB', 'A']}}, facts), ['B'])
+        self.assertEqual(media.missing_characters({'text': {'words': ['A A']}}, facts), [])
+
 
 if __name__ == '__main__':
     unittest.main()

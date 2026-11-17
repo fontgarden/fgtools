@@ -21,6 +21,10 @@ image is a PNG, a carousel is numbered PNG pages and one PDF (the document
 post of LinkedIn), and a video is an MP4. Beside each output is a JSON record
 with the caption, the alternative text, the size and the commit of the sources.
 
+The command renders nothing when the font has no glyph for a character of
+the texts in brand.toml, because DesignBot would draw it with a system font.
+It does not yet check the text that a script writes itself.
+
 It needs the `designbot` command, and `ffmpeg` for video:
 
     cargo install --git https://github.com/eliheuer/designbot designbot-cli
@@ -68,6 +72,18 @@ def font_facts(layout):
                 low, high = axis.minValue, axis.maxValue
     cap = getattr(font['OS/2'], 'sCapHeight', 0) / font['head'].unitsPerEm or 0.7
     return path, family, low, high, cap
+
+
+def missing_characters(brand, facts):
+    """The characters of the texts of brand.toml that the font has no glyph for. DesignBot draws
+    such a character with a system font, and a picture of another font is worse than no picture."""
+    from fontTools.ttLib import TTFont
+    covered = TTFont(facts[0], lazy=True).getBestCmap()
+    text = brand.get('text', {})
+    words = [word for table in brand.get('format', {}).values() for word in table.get('words', [])]
+    used = ''.join([facts[1], text.get('tagline', ''), text.get('designer', ''), text.get('url', ''),
+                    *text.get('words', []), *words])
+    return sorted({character for character in used if ord(character) not in covered})
 
 
 def commit(root):
@@ -205,6 +221,11 @@ def main(argv=None):
     if any(table.get('kind') == 'video' for _, table, _, _ in todo) and shutil.which('ffmpeg') is None:
         raise SystemExit('A video format needs the `ffmpeg` command, which is not on PATH.')
     facts = font_facts(layout)
+    missing = missing_characters(brand, facts)
+    if missing:
+        print(f'Nothing rendered: the font has no glyph for {len(missing)} characters of the texts in brand.toml: '
+              f'{" ".join(missing[:40])}\nDraw them, or change the texts.')
+        return
     script = program(layout, brand)
     count = 0
     for name, table, canvas_name, canvas in todo:
