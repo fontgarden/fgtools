@@ -43,6 +43,7 @@ COMMANDS = {
     'render': ('render_glyphs', [], 'Draw glyphs large: change, fill, points, donors, reference fonts and the glyph in a block of text'),
     'measure-picture': ('measure_picture', [], 'Measure the glyphs in a picture of text, for example a screenshot'),
     'media': ('media', [], 'Render the marketing media of the project with DesignBot: images, carousels and video'),
+    'site': ('site', [], 'Collect the print proof and the media into output/site/ for GitHub Pages'),
     'check-repository': ('check_repository', [], 'Check the file layout and the references of the documents'),
     'diff': ('diff', [], 'Compare two builds with diffenator3'),
     'proof-web': ('proof_web', [], 'Serve the font beside reference-fonts/ in a browser'),

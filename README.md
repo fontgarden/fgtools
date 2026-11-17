@@ -89,6 +89,7 @@ be the top level of its Git repository.
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
 | `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list]` | Render the marketing media of the project with DesignBot: each format of `documentation/media/brand.toml` on each of its canvases, into `output/media/`. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
+| `fgtools site` | Collect `output/proof/proof.pdf` and the renders of `output/media/` into `output/site/`, with an index page. The CI of a project publishes the folder on GitHub Pages. |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
 | `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
@@ -124,6 +125,7 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.check_repository` | `check-repository` |
 | `fgtools.render_glyphs` | `render` |
 | `fgtools.measure_picture` | `measure-picture` |
+| `fgtools.site` | `site` |
 | `fgtools.media` | `media`. The canvases are in `fgtools/media_canvases.toml`, and the module that each script gets is `fgtools/media_brief.rs`. |
 | `fgtools.text_color` | the color of a glyph in text, for `render` and `check-design` |
 | `fgtools.edit_glyph` | `edit` |
