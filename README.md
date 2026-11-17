@@ -88,6 +88,7 @@ be the top level of its Git repository.
 | `fgtools build [--compiler fontmake]` | Remove the fonts directory and build the fonts with `gftools builder` and fontc, from a temporary copy of the sources that has one glyph order in all masters. `--compiler fontmake` builds with fontmake. |
 | `fgtools qa [--full \| --package DIR]` | Run Fontspector with the Font.Garden profile (the Google Fonts profile plus the Font.Garden checks: em size, grid, vendor ID, license, ink, marks, Arabic joins, Hebrew marks, precomposed letters and STAT weight) and the checks of the project in `sources/fontspector_checks.py`, on the built fonts. Without `--full`, it works offline and leaves out the checks in `[qa.exclude]` of `CONTEXT.md`. Reports go to `output/qa/`. |
 | `fgtools render "GLYPHS" [--master NAME] [--beside "GLYPHS"] [--base REV] [--out FILE]` | Draw glyphs large in one PNG: the change since `REV` (default `main`), the filled glyph, its points and handles, other glyphs of the project and the same character in each reference font, all at one scale and baseline. Writes to `output/render/`. Under each glyph it sets the glyph in a block of text, sharp and blurred, beside the same block in the reference font with the median color, and gives the color as a number. |
+| `fgtools media [FORMAT ...] [--canvas NAME] [--safe-areas] [--list]` | Render the marketing media of the project with DesignBot: each format of `documentation/media/brand.toml` on each of its canvases, into `output/media/`. An image is a PNG, a carousel is PNG pages and one PDF, a video is an MP4. See [Marketing media](#marketing-media). |
 | `fgtools measure-picture PICTURE [--text CHARACTERS]` | Measure the glyphs in a picture of one line of text, for example a screenshot of another font: width, top, bottom and strokes of each glyph, in cap heights and H stems when the text has an H. |
 | `fgtools edit GLYPH [--master NAME] set-coordinate \| set-sidebearings \| copy` | Change a glyph with a calculated operation: move an edge to a coordinate, set the sidebearings, or copy a donor with a mirror. A second run changes nothing. It marks the glyph purple and refuses a green glyph. |
 | `fgtools check-repository` | Check that every tracked file has a place in the layout of a Font.Garden project, that no file is larger than 500 KB, and that no document names a file or a `make` target that does not exist. |
@@ -123,6 +124,7 @@ runs one module, so `python -m fgtools.status --print` is the same as
 | `fgtools.check_repository` | `check-repository` |
 | `fgtools.render_glyphs` | `render` |
 | `fgtools.measure_picture` | `measure-picture` |
+| `fgtools.media` | `media`. The canvases are in `fgtools/media_canvases.toml`, and the module that each script gets is `fgtools/media_brief.rs`. |
 | `fgtools.text_color` | the color of a glyph in text, for `render` and `check-design` |
 | `fgtools.edit_glyph` | `edit` |
 | `fgtools.diff` | `diff` |
@@ -241,6 +243,40 @@ the first place that has it: the shared collection, a local clone of
 google/fonts that `FONTGARDEN_GOOGLE_FONTS` names, or a download from GitHub.
 The command lists the folders that `CONTEXT.md` does not name, and does not
 remove them.
+
+## Marketing media
+
+`fgtools media` renders pictures, carousels and videos of the font for
+Instagram, LinkedIn and X. It needs the `designbot` command, and `ffmpeg` for
+video.
+
+The work is in two parts. The part that is the same for every font is in
+fgtools: the canvases with their safe areas (`fgtools/media_canvases.toml`)
+and the runner. The part that a designer changes for the style of a font is
+in the project, in `documentation/media/`:
+
+| File | Content |
+| --- | --- |
+| `brand.toml` | The colors, the texts, and one table for each format: its kind (`image`, `carousel` or `video`), its canvases, its caption and its alternative text. |
+| `<format>.rs` | The DesignBot script of the format. It holds the layout only. |
+
+The command adds the module `brief` to each script. It gives the script the
+canvas, the safe area, the family name, the font file, the weight range, the
+cap height, the colors and the texts, so one script draws on every canvas.
+
+| Canvas | Size | Use |
+| --- | --- | --- |
+| `portrait` | 1080 x 1350 | Instagram feed and carousel, LinkedIn image and document page, X image |
+| `vertical` | 1080 x 1920 | Instagram Reel and Story, vertical video |
+| `landscape` | 1920 x 1080 | Video and image on X and LinkedIn |
+| `square` | 1080 x 1080 | A square image |
+| `card` | 1200 x 630 | The link preview |
+
+One output is one format on one canvas:
+`output/media/<format>/<family>_<format>_<canvas>.<extension>`, with a JSON
+record of the caption, the alternative text, the size and the commit of the
+sources. `--safe-areas` draws the safe area of the canvas on each picture.
+Git ignores `output/`: the media are not tracked.
 
 ## Web proof
 

@@ -1,0 +1,41 @@
+# The canvases of the marketing media, for `fgtools media`.
+#
+# One canvas is one size of picture or video that the platforms accept. The
+# safe area is the part that no interface element or grid crop hides: `safe`
+# gives the distance from each edge, in pixels. The platforms change these
+# values. Checked against the Instagram, LinkedIn and X help pages and current
+# guides in November 2026.
+
+[canvas.portrait]
+width = 1080
+height = 1350
+safe = { top = 0, right = 34, bottom = 0, left = 34 }
+use = "Instagram feed and carousel, LinkedIn image and document page, X image. The Instagram grid shows 3:4, so it cuts 34 pixels from each side."
+
+[canvas.vertical]
+width = 1080
+height = 1920
+safe = { top = 270, right = 65, bottom = 670, left = 65 }
+use = "Instagram Reel and Story, vertical video on LinkedIn and X. The interface covers the top and the bottom."
+
+[canvas.landscape]
+width = 1920
+height = 1080
+safe = { top = 54, right = 96, bottom = 54, left = 96 }
+use = "Video and image on X and LinkedIn."
+
+[canvas.square]
+width = 1080
+height = 1080
+safe = { top = 54, right = 54, bottom = 54, left = 54 }
+use = "A square image where a platform or a page needs one."
+
+[canvas.card]
+width = 1200
+height = 630
+safe = { top = 15, right = 0, bottom = 15, left = 0 }
+use = "The link preview (Open Graph image and X card). X cuts it to 2:1."
+
+# One video preset for every platform. Each platform encodes the file again.
+[video]
+frames_per_second = 30
