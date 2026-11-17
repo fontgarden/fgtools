@@ -20,6 +20,7 @@ canvas: `output/media/<format>/<family>_<format>_<canvas>.<extension>`. An
 image is a PNG, a carousel is numbered PNG pages and one PDF (the document
 post of LinkedIn), and a video is an MP4. Beside each output is a JSON record
 with the caption, the alternative text, the size and the commit of the sources.
+`output/media/index.html` is a review page that shows every output.
 
 The command renders nothing when the font has no glyph for a character of
 the texts in brand.toml, because DesignBot would draw it with a system font.
@@ -70,8 +71,13 @@ def font_facts(layout):
         for axis in font['fvar'].axes:
             if axis.axisTag == 'wght':
                 low, high = axis.minValue, axis.maxValue
-    cap = getattr(font['OS/2'], 'sCapHeight', 0) / font['head'].unitsPerEm or 0.7
-    return path, family, low, high, cap
+    upm, os2 = font['head'].unitsPerEm, font['OS/2']
+    cap = getattr(os2, 'sCapHeight', 0) / upm or 0.7
+    metrics = {'upm': upm, 'x_height': getattr(os2, 'sxHeight', 0) / upm or 0.5,
+               'ascender': font['hhea'].ascent / upm, 'descender': font['hhea'].descent / upm,
+               'version': f'{font["head"].fontRevision:.3f}', 'glyphs': font['maxp'].numGlyphs,
+               'characters': len(font.getBestCmap())}
+    return path, family, low, high, cap, metrics
 
 
 def missing_characters(brand, facts):
@@ -115,7 +121,7 @@ def outputs(layout, brand, names=None, only_canvas=None):
 
 def arguments(brand, table, canvas, facts, output, safe_areas):
     """The key=value arguments that the module `brief` of a script reads."""
-    path, family, low, high, cap = facts
+    path, family, low, high, cap, metrics = facts
     colors, text, safe = brand.get('colors', {}), brand.get('text', {}), canvas['safe']
     values = {
         'width': canvas['width'], 'height': canvas['height'],
@@ -126,6 +132,10 @@ def arguments(brand, table, canvas, facts, output, safe_areas):
         'tagline': text.get('tagline', ''), 'designer': text.get('designer', ''), 'url': text.get('url', ''),
         'words': '|'.join(table.get('words') or text.get('words') or [family]),
         'overlay': int(bool(safe_areas)), 'output': output,
+        'upm': metrics['upm'], 'x_height': f'{metrics["x_height"]:.4f}',
+        'ascender': f'{metrics["ascender"]:.4f}', 'descender': f'{metrics["descender"]:.4f}',
+        'version': metrics['version'], 'glyphs': metrics['glyphs'], 'characters': metrics['characters'],
+        'grid': brand.get('design', {}).get('grid', metrics['upm'] // 16),
     }
     return [f'{key}={value}' for key, value in values.items()]
 
@@ -197,6 +207,74 @@ def render(layout, brand, script, name, table, canvas_name, canvas, facts, safe_
     return written
 
 
+PAGE = """<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{family}: media</title>
+<style>
+  body {{ margin: 0; padding: 32px; background: #1c1c1c; color: #c8c8c8; font: 15px/1.5 system-ui, sans-serif; }}
+  h1 {{ font-size: 22px; font-weight: 600; margin: 0 0 4px; }}
+  h2 {{ font-size: 17px; font-weight: 600; margin: 48px 0 4px; }}
+  p {{ margin: 0 0 12px; max-width: 76ch; color: #9a9a9a; }}
+  code {{ color: #c8c8c8; }}
+  .row {{ display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; margin-top: 16px; }}
+  figure {{ margin: 0; }}
+  figure img, figure video {{ display: block; height: 420px; width: auto; background: #000; outline: 1px solid #3a3a3a; }}
+  figcaption {{ font-size: 13px; color: #9a9a9a; margin-top: 6px; max-width: 420px; }}
+  table {{ border-collapse: collapse; margin-top: 12px; }}
+  td, th {{ text-align: left; padding: 4px 16px 4px 0; border-bottom: 1px solid #333; font-weight: normal; }}
+  th {{ color: #9a9a9a; }}
+  .missing {{ color: #e8c547; }}
+</style>
+<h1>{family}: media</h1>
+<p>Every output of <code>fgtools media</code>, from the sources at commit <code>{commit}</code>. One output is one
+format on one canvas. The brand and the format scripts are in <code>documentation/media/</code>; the canvases are
+the same for every font.</p>
+<table><tr><th>Canvas</th><th>Size</th><th>Safe area: top, right, bottom, left</th><th>Use</th></tr>
+{canvas_rows}</table>
+{sections}
+</html>
+"""
+
+
+def write_index(layout, brand, family):
+    """Write output/media/index.html: a sheet of every rendered output, for review in a browser."""
+    from html import escape
+    root = layout.root / 'output/media'
+    known = canvases()
+    canvas_rows = ''.join(
+        f'<tr><td>{escape(name)}</td><td>{c["width"]} x {c["height"]}</td>'
+        f'<td>{c["safe"]["top"]}, {c["safe"]["right"]}, {c["safe"]["bottom"]}, {c["safe"]["left"]}</td>'
+        f'<td>{escape(c["use"])}</td></tr>\n' for name, c in known.items())
+    sections = []
+    for name, table in brand.get('format', {}).items():
+        records = [json.loads(path.read_text()) for path in sorted((root / name).glob('*.json'))]
+        figures = []
+        for record in records:
+            label = f'{record["canvas"]}, {record["width"]} x {record["height"]}'
+            for file in record['files']:
+                source = f'{name}/{file}'
+                if file.endswith('.mp4'):
+                    media = f'<video src="{escape(source)}" autoplay loop muted playsinline></video>'
+                elif file.endswith('.pdf'):
+                    figures.append(f'<figure><figcaption><a style="color:#c8c8c8" href="{escape(source)}">'
+                                   f'{escape(file)}</a> (the carousel as one PDF)</figcaption></figure>')
+                    continue
+                else:
+                    media = f'<img src="{escape(source)}" alt="{escape(record["alt"])}" loading="lazy">'
+                figures.append(f'<figure>{media}<figcaption>{escape(label)}<br>{escape(file)}</figcaption></figure>')
+        text = lambda key: escape(table.get(key, '')) or f'<span class="missing">no {key} in brand.toml</span>'
+        note = '' if records else '<p class="missing">Not rendered.</p>'
+        sections.append(f'<h2>{escape(name)}</h2>\n<p>{escape(table.get("kind", "image"))} on '
+                        f'{escape(", ".join(table.get("canvases", [])))}.<br>Caption: {text("caption")}<br>'
+                        f'Alternative text: {text("alt")}</p>{note}\n<div class="row">{"".join(figures)}</div>')
+    page = PAGE.format(family=escape(family), commit=escape(commit(layout.root) or 'unknown'),
+                       canvas_rows=canvas_rows, sections='\n'.join(sections))
+    (root / 'index.html').write_text(page)
+    return root / 'index.html'
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='fgtools media', description=__doc__.split('\n')[0])
     parser.add_argument('formats', nargs='*', help='format names; the default is every format of brand.toml')
@@ -235,7 +313,8 @@ def main(argv=None):
         count += 1
         files = render(layout, brand, script, name, table, canvas_name, canvas, facts, args.safe_areas)
         print(f'{name}  {canvas_name}  {files[0].relative_to(layout.root)}' + (f'  (+{len(files) - 1})' if len(files) > 1 else ''))
-    print(f'{count} outputs in output/media/')
+    index = write_index(layout, brand, facts[1])
+    print(f'{count} outputs in output/media/. The review page is {index.relative_to(layout.root)}')
 
 
 if __name__ == '__main__':

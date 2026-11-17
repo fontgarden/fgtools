@@ -247,7 +247,7 @@ remove them.
 ## Marketing media
 
 `fgtools media` renders pictures, carousels and videos of the font for
-Instagram, LinkedIn and X. It needs the `designbot` command, and `ffmpeg` for
+Instagram, TikTok, LinkedIn, X and Mastodon. It needs the `designbot` command, and `ffmpeg` for
 video.
 
 The work is in two parts. The part that is the same for every font is in
@@ -266,9 +266,9 @@ cap height, the colors and the texts, so one script draws on every canvas.
 
 | Canvas | Size | Use |
 | --- | --- | --- |
-| `portrait` | 1080 x 1350 | Instagram feed and carousel, LinkedIn image and document page, X image |
-| `vertical` | 1080 x 1920 | Instagram Reel and Story, vertical video |
-| `landscape` | 1920 x 1080 | Video and image on X and LinkedIn |
+| `portrait` | 1080 x 1350 | Feed image and carousel on Instagram, LinkedIn, X and Mastodon; the page of a LinkedIn document |
+| `vertical` | 1080 x 1920 | Instagram Reel and Story, and TikTok |
+| `landscape` | 1920 x 1080 | Video and wide image on X, LinkedIn and Mastodon |
 | `square` | 1080 x 1080 | A square image |
 | `card` | 1200 x 630 | The link preview |
 

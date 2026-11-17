@@ -3,32 +3,34 @@
 # One canvas is one size of picture or video that the platforms accept. The
 # safe area is the part that no interface element or grid crop hides: `safe`
 # gives the distance from each edge, in pixels. The platforms change these
-# values. Checked against the Instagram, LinkedIn and X help pages and current
-# guides in November 2026.
+# values. Checked in November 2026 against the developer and help pages of
+# Instagram, TikTok, LinkedIn, X and Mastodon. No platform of this list
+# publishes its safe area: the values are from current guides. A safe area
+# here is valid on every platform that uses the canvas.
 
 [canvas.portrait]
 width = 1080
 height = 1350
-safe = { top = 0, right = 34, bottom = 0, left = 34 }
-use = "Instagram feed and carousel, LinkedIn image and document page, X image. The Instagram grid shows 3:4, so it cuts 34 pixels from each side."
+safe = { top = 0, right = 40, bottom = 0, left = 40 }
+use = "Feed image and carousel on Instagram, LinkedIn, X and Mastodon; the page of a LinkedIn document. The Instagram grid shows 3:4 and cuts the sides."
 
 [canvas.vertical]
 width = 1080
 height = 1920
-safe = { top = 270, right = 65, bottom = 670, left = 65 }
-use = "Instagram Reel and Story, vertical video on LinkedIn and X. The interface covers the top and the bottom."
+safe = { top = 270, right = 195, bottom = 672, left = 120 }
+use = "Instagram Reel and Story, and TikTok. The interface covers the top, the bottom and the right side."
 
 [canvas.landscape]
 width = 1920
 height = 1080
 safe = { top = 54, right = 96, bottom = 54, left = 96 }
-use = "Video and image on X and LinkedIn."
+use = "Video and wide image on X, LinkedIn and Mastodon."
 
 [canvas.square]
 width = 1080
 height = 1080
 safe = { top = 54, right = 54, bottom = 54, left = 54 }
-use = "A square image where a platform or a page needs one."
+use = "A square image, for a page or a profile that needs one."
 
 [canvas.card]
 width = 1200

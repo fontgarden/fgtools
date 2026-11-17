@@ -16,8 +16,18 @@ mod brief {
         pub font: String,
         /// The lowest and the highest weight of the font.
         pub weight: (f32, f32),
-        /// The cap height as a part of the font size.
+        /// The cap height, the x-height, the ascender and the descender as parts of the font size.
         pub cap: f64,
+        pub x_height: f64,
+        pub ascender: f64,
+        pub descender: f64,
+        /// The units of one em, and the step of the design grid in units.
+        pub upm: f64,
+        pub grid: f64,
+        /// The version, the number of glyphs and the number of encoded characters of the font.
+        pub version: String,
+        pub glyphs: usize,
+        pub characters: usize,
         pub ground: Color,
         pub ink: Color,
         pub accent: Color,
@@ -55,6 +65,14 @@ mod brief {
             font: get("font"),
             weight: (weight[0] as f32, weight[1] as f32),
             cap: numbers("cap")[0],
+            x_height: numbers("x_height")[0],
+            ascender: numbers("ascender")[0],
+            descender: numbers("descender")[0],
+            upm: numbers("upm")[0],
+            grid: numbers("grid")[0],
+            version: get("version"),
+            glyphs: numbers("glyphs")[0] as usize,
+            characters: numbers("characters")[0] as usize,
             ground: color(&get("ground")),
             ink: color(&get("ink")),
             accent: color(&get("accent")),
