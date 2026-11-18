@@ -444,6 +444,11 @@ def register(plugin: Plugin) -> None:
         configuration_defaults={
             'file_size': {'WARN_SIZE': 1048576, 'FAIL_SIZE': 9437184, 'FATAL_SIZE': 10485760},
             'googlefonts/family/file_size': {'FATAL_SIZE': 26214400}}))
+    # The Font.Garden checks and the checks of the project, without the
+    # Google Fonts profile: `fgtools qa --checks fontgarden`.
+    plugin.register_profile('fontgarden-only', ProfileDefinition(
+        sections={'Font.Garden': [fn._fontspector_check['id'] for fn in checks],
+                  'This font': [fn._fontspector_check['id'] for fn in own]}))
 
 
 def main():
