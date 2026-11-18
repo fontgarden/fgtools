@@ -42,6 +42,9 @@ LAYOUT = [
 
 # Allowed paths that a project does not need.
 OPTIONAL = [
+    # The MCP servers that an agent tool (OMP, Claude Code) starts in this
+    # project, for example `runebender mcp --live` for the open editor.
+    '.mcp.json',
     # More than one master.
     'sources/*.designspace',
     # The specimen that the font was traced from, and its glyph labels.

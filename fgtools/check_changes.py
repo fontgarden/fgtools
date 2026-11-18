@@ -20,7 +20,10 @@ It fails (exit status 1) when:
 - a changed composite is green but `fgtools check-design --ready` does not
   list it;
 - a glyph outside --glyphs changed;
-- a source file other than a glyph file changed, unless --allow-other;
+- a source file other than a glyph file changed, unless --allow-other. A
+  proposal of Runebender (a `com.runebender.proposal.*` layer, and its entry in
+  layercontents.plist) is not a change of the sources: it is listed and
+  allowed, because it changes no glyph until the designer applies it;
 - a changed glyph has points off the 2-unit grid, or a different structure in
   the masters;
 - `fgtools lint-glifs` finds a structural fault in a changed glyph, for example a
@@ -62,6 +65,33 @@ def changed_files(base):
     tracked = git('diff', '--name-only', base, '--', 'sources').splitlines()
     new = git('ls-files', '--others', '--exclude-standard', '--', 'sources').splitlines()
     return sorted(p for p in set(tracked + new) if not p.endswith('.md'))
+
+
+PROPOSAL = 'com.runebender.proposal.'
+
+
+def layers(text):
+    """The (layer name, folder) pairs of a layercontents.plist text."""
+    return [tuple(pair) for pair in plistlib.loads(text.encode())] if text else []
+
+
+def proposal_paths(base):
+    """The proposal folders of each master, and the layercontents.plist files
+    whose only change is proposal layers."""
+    folders, plists = [], []
+    for master in project.load().masters:
+        ufo = project.load().ufo_relative(master)
+        path = f'{ufo}/layercontents.plist'
+        file = project.load().root / path
+        now = layers(file.read_text()) if file.is_file() else []
+        folders += [f'{ufo}/{folder}/' for name, folder in now if name.startswith(PROPOSAL)]
+        try:
+            then = layers(git('show', f'{base}:{path}'))
+        except subprocess.CalledProcessError:
+            continue
+        if [p for p in now if not p[0].startswith(PROPOSAL)] == [p for p in then if not p[0].startswith(PROPOSAL)]:
+            plists.append(path)
+    return folders, plists
 
 
 def base_contents(base, master):
@@ -147,8 +177,11 @@ def main():
         for name, record in current[master].items():
             by_file[record['path']] = (master, name)
     changed = {m: set() for m in masters}
+    proposal_folders, proposal_plists = proposal_paths(args.base)
     for path in changed_files(args.base):
-        if path in by_file:
+        if path in proposal_plists or path.startswith(tuple(proposal_folders)):
+            notes.append(f'{path}: a Runebender proposal, which changes no glyph until it is applied')
+        elif path in by_file:
             master, name = by_file[path]
             changed[master].add(name)
         elif not args.allow_other:
