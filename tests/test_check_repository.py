@@ -32,6 +32,11 @@ class CheckRepository(unittest.TestCase):
     def test_a_project_in_the_layout_has_no_problems(self):
         self.assertEqual(check_repository.problems(self.root), [])
 
+    def test_drafting_cases_are_optional(self):
+        (self.root / 'sources/held-out-glyphs.toml').unlink()
+        self.add()
+        self.assertEqual(check_repository.problems(self.root), [])
+
     def test_a_file_without_a_place_and_a_work_record_are_found(self):
         (self.root / 'notes.md').write_text('text\n')
         (self.root / 'documentation/handoff.md').write_text('text\n')

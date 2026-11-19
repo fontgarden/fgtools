@@ -187,6 +187,8 @@ def cases(task, root=None):
     """The cases of a task: glyph, the masters it is hidden or changed in,
     the masters it is scored in, and the glyphs it is drawn from."""
     source = project.load(root)
+    if not source.held_out.is_file():
+        raise project.ProjectError('Drafting evaluation requires sources/held-out-glyphs.toml in this project.')
     table = tomllib.loads(source.held_out.read_text())[task]
     green = green_masters(root)
     rows = table['cases'] if task == 'relatives' else [{'glyph': g} for g in table['glyphs']]

@@ -33,7 +33,7 @@ LAYOUT = [
     'OFL.txt', 'README.md', 'requirements.in', 'requirements.txt',
     '.github/workflows/*.yaml',
     # Sources.
-    'sources/config.yaml', 'sources/held-out-glyphs.toml', 'sources/*.ufo/**',
+    'sources/config.yaml', 'sources/*.ufo/**',
     # The release document.
     'documentation/*.md',
 ]
@@ -42,6 +42,8 @@ LAYOUT = [
 OPTIONAL = [
     # On-demand glyph grading report.
     'STATUS.md',
+    # Cases for projects that use the drafting benchmark.
+    'sources/held-out-glyphs.toml',
     # Task contracts for unattended runs.
     '.agents/tasks/*.md',
     # The shared record of work of the agents: what happened, newest first.
