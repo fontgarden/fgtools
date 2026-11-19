@@ -32,8 +32,6 @@ LAYOUT = [
     '.gitignore', 'AGENTS.md', 'AUTHORS.txt', 'CONTEXT.md', 'CONTRIBUTORS.txt', 'Makefile',
     'OFL.txt', 'README.md', 'STATUS.md', 'requirements.in', 'requirements.txt',
     '.github/workflows/*.yaml',
-    # Task contracts for unattended runs.
-    '.agents/tasks/*.md',
     # Sources.
     'sources/config.yaml', 'sources/held-out-glyphs.toml', 'sources/*.ufo/**',
     # The release document.
@@ -42,6 +40,8 @@ LAYOUT = [
 
 # Allowed paths that a project does not need.
 OPTIONAL = [
+    # Task contracts for unattended runs.
+    '.agents/tasks/*.md',
     # The shared record of work of the agents: what happened, newest first.
     'WORKLOG.md',
     # The MCP servers that an agent tool (OMP, Claude Code) starts in this
