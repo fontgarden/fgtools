@@ -75,12 +75,12 @@ def build_snapshot(config_path, output=None):
                 if not match:
                     raise ValueError(f'No glyph order in {lib}')
                 lib.write_text(text[:match.end(1)] + values + text[match.end(2):])
-        # The metadata options belong to fgtools, not the gftools builder.
+        # Change only the outputDir line, so that gftools reads the text of
+        # the project's config.yaml and rejects what it would reject there.
         output = Path(output or source_root / config.get('outputDir', '../fonts')).resolve()
+        text = re.sub(r'^outputDir:.*\n?', '', config_path.read_text(), flags=re.M)
         copied = target / config_path.name
-        config.pop('fgtoolsMetadata', None)
-        config['outputDir'] = str(output)
-        copied.write_text(yaml.safe_dump(config, sort_keys=False))
+        copied.write_text(f'{text.rstrip()}\noutputDir: {output}\n')
         yield copied
 
 
@@ -135,7 +135,8 @@ def build_fonts(config_path, output, compiler='fontc', quiet=False):
     fonts = sorted(Path(output).rglob('*.ttf'))
     if not fonts:
         sys.exit('gftools builder produced no TTF files.')
-    options = yaml.safe_load(Path(config_path).read_text()).get('fgtoolsMetadata', {})
+    metadata = yaml.safe_load(Path(config_path).read_text()).get('localMetadata')
+    options = metadata.get('fgtools', {}) if isinstance(metadata, dict) else {}
     for font in fonts:
         if options:
             apply_metadata(font, options)
