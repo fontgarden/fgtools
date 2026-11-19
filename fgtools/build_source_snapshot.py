@@ -31,6 +31,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import yaml
+from fontTools.ttLib import TTFont
 
 from fgtools import project
 
@@ -74,12 +75,12 @@ def build_snapshot(config_path, output=None):
                 if not match:
                     raise ValueError(f'No glyph order in {lib}')
                 lib.write_text(text[:match.end(1)] + values + text[match.end(2):])
-        # Change only the outputDir line, so that gftools reads the text of
-        # the project's config.yaml and rejects what it would reject there.
+        # The metadata options belong to fgtools, not the gftools builder.
         output = Path(output or source_root / config.get('outputDir', '../fonts')).resolve()
-        text = re.sub(r'^outputDir:.*\n?', '', config_path.read_text(), flags=re.M)
         copied = target / config_path.name
-        copied.write_text(f'{text.rstrip()}\noutputDir: {output}\n')
+        config.pop('fgtoolsMetadata', None)
+        config['outputDir'] = str(output)
+        copied.write_text(yaml.safe_dump(config, sort_keys=False))
         yield copied
 
 
@@ -87,6 +88,28 @@ def tool_path():
     """PATH with the directory of this Python first: gftools, fontmake and the
     installed fontc are there, and it need not be on PATH."""
     return os.pathsep.join([str(Path(sys.executable).parent), os.environ.get('PATH', '')])
+
+
+def apply_metadata(path, options):
+    """Apply the naming choices configured for a built font."""
+    with TTFont(path) as font:
+        changed = False
+        if options.get('staticWWS') and 'fvar' not in font and 'OS/2' in font:
+            os2 = font['OS/2']
+            if not os2.fsSelection & 0x100:
+                os2.fsSelection |= 0x100
+                changed = True
+        if options.get('showOpticalSizeLabels') and 'STAT' in font:
+            stat = font['STAT'].table
+            if stat.AxisValueArray and stat.DesignAxisRecord:
+                axes = stat.DesignAxisRecord.Axis
+                for value in stat.AxisValueArray.AxisValue:
+                    if (value.Format in (1, 2, 3) and axes[value.AxisIndex].AxisTag == 'opsz'
+                            and value.Flags & 0x2):
+                        value.Flags &= ~0x2
+                        changed = True
+        if changed:
+            font.save(path)
 
 
 def build_fonts(config_path, output, compiler='fontc', quiet=False):
@@ -112,6 +135,10 @@ def build_fonts(config_path, output, compiler='fontc', quiet=False):
     fonts = sorted(Path(output).rglob('*.ttf'))
     if not fonts:
         sys.exit('gftools builder produced no TTF files.')
+    options = yaml.safe_load(Path(config_path).read_text()).get('fgtoolsMetadata', {})
+    for font in fonts:
+        if options:
+            apply_metadata(font, options)
     return fonts
 
 
