@@ -42,6 +42,8 @@ LAYOUT = [
 
 # Allowed paths that a project does not need.
 OPTIONAL = [
+    # The shared record of work of the agents: what happened, newest first.
+    'WORKLOG.md',
     # The MCP servers that an agent tool (OMP, Claude Code) starts in this
     # project, for example `runebender mcp --live` for the open editor.
     '.mcp.json',
@@ -63,8 +65,8 @@ OPTIONAL = [
 
 # Names that mark a record of work, not a maintained document.
 RECORD_NAME = re.compile(r'worklog|handoff|report|receipt|\d{4}-\d{2}-\d{2}', re.I)
-# STATUS.md is generated.
-GENERATED = {'STATUS.md'}
+# STATUS.md is generated. WORKLOG.md is the one record of work that the layout allows.
+GENERATED = {'STATUS.md', 'WORKLOG.md'}
 MAX_FILE_BYTES = 500_000
 MAX_SPECIMEN_BYTES = 8_000_000
 
