@@ -8,7 +8,7 @@ from fgtools import check_repository
 from tests import fixture
 
 ROOT_FILES = ('.gitignore', 'AGENTS.md', 'AUTHORS.txt', 'CONTRIBUTORS.txt', 'OFL.txt', 'README.md',
-              'STATUS.md', 'requirements.in', 'requirements.txt', '.github/workflows/build.yaml',
+              'requirements.in', 'requirements.txt', '.github/workflows/build.yaml',
               '.agents/tasks/glyph-drafts.md', 'documentation/google-fonts.md')
 
 

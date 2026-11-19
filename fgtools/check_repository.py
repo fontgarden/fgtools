@@ -28,9 +28,9 @@ from fgtools import project
 # matches any depth. Each of these must match at least one file.
 LAYOUT = [
     # Root: the Google Fonts template files, the guide for agents, the design
-    # file and the status.
+    # file.
     '.gitignore', 'AGENTS.md', 'AUTHORS.txt', 'CONTEXT.md', 'CONTRIBUTORS.txt', 'Makefile',
-    'OFL.txt', 'README.md', 'STATUS.md', 'requirements.in', 'requirements.txt',
+    'OFL.txt', 'README.md', 'requirements.in', 'requirements.txt',
     '.github/workflows/*.yaml',
     # Sources.
     'sources/config.yaml', 'sources/held-out-glyphs.toml', 'sources/*.ufo/**',
@@ -40,6 +40,8 @@ LAYOUT = [
 
 # Allowed paths that a project does not need.
 OPTIONAL = [
+    # On-demand glyph grading report.
+    'STATUS.md',
     # Task contracts for unattended runs.
     '.agents/tasks/*.md',
     # The shared record of work of the agents: what happened, newest first.
