@@ -5,7 +5,7 @@ def draw(sheet, job):
     font, facts = job.type, job.facts
     if not font.covers(job.family.replace(' ', '')):
         return 'the font cannot set its name yet'
-    fits = lambda text, size: font.measure(text, font.high)[0] * size <= sheet.measure
+    fits = lambda text, size: font.measure(text, font.high, size=size)[0] * size <= sheet.measure
     size = next((size for size in (256, 128) if all(fits(word, size) for word in job.family.split())), 64)
     lines = [job.family] if fits(job.family, size) else job.family.split()
     step = size // sheet.grid['module']

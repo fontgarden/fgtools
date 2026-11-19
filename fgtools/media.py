@@ -70,7 +70,7 @@ EXTENSION = {'image': 'png', 'carousel': 'png', 'video': 'mp4'}
 MEDIA = 'documentation/media'
 # The pages of the print proof, in their order: scripts of media_formats/proofs/, and two formats.
 PROOF = ['release', 'character-set', 'sizes', 'reading', 'spacing', 'kerning', 'diacritics', 'weights',
-         'interpolation', 'lines', 'arabic-joining', 'arabic-marks']
+         'interpolation', 'grade', 'lines', 'arabic-joining', 'arabic-marks']
 SPECIMEN = ['release', 'text', 'words', 'weights', 'scripts', 'glyph', 'characters']     # the pages, in order
 PREFERRED_GLYPHS = 'aGRg&?nHOoesE25'
 SCRIPTS = {'Latin': (0x41, 0x7A), 'Arabic': (0x627, 0x64A), 'Hebrew': (0x5D0, 0x5EA), 'Greek': (0x391, 0x3C9),

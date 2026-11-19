@@ -59,8 +59,16 @@ fn main() {
                     "text" => {
                         ctx.no_stroke().fill(color(&f[5..9])).font(&family).font_size(number(f[3]));
                         ctx.text_align(TextAlign::Left).clear_font_variations().clear_font_features();
+                        // The axis field is the weight, then each other axis as `tag=value`.
+                        let mut values = f[4].split(',');
+                        let weight = values.next().unwrap_or("");
                         if axis {
-                            ctx.font_variation("wght", number(f[4]) as f32);
+                            ctx.font_variation("wght", number(weight) as f32);
+                        }
+                        for value in values {
+                            if let Some((tag, amount)) = value.split_once('=') {
+                                ctx.font_variation(tag, number(amount) as f32);
+                            }
                         }
                         for tag in f[9].split(',').filter(|tag| !tag.is_empty()) {
                             ctx.font_feature(tag, 1);

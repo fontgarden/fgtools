@@ -22,11 +22,11 @@ def draw(sheet, job):
                 if size not in sheet.grid['sizes'] or row + rows > sheet.rows:
                     continue
                 line = font.lines(text, measure, size, weight)[0]
-                if font.measure(line, weight)[0] * size < measure * 0.6:
+                if font.measure(line, weight, size=size)[0] * size < measure * 0.6:
                     # A large size has room for one word: the word of the text that fills the measure best.
                     line = font.fit(sorted(set(text.replace(',', ' ').replace('.', ' ').split())), measure * 0.95, size,
                                     weight, least=0) or line
-                if font.measure(line, weight)[0] * size > measure:
+                if font.measure(line, weight, size=size)[0] * size > measure:
                     continue
                 sheet.label(sheet.size(size), 0, row, drop=0)
                 sheet.text(line, sheet.cols if right else LABELS, row, size, weight,

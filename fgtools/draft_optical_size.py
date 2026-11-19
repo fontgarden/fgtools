@@ -17,24 +17,22 @@ The rule is a table of CONTEXT.md:
 Each side of a glyph loses `side` units. The outline, the anchors and the
 marks move left by `side`, and the advance gets smaller by two times `side`.
 On a joining side of an Arabic letter the points on the edge of the advance
-stay on that edge, so the join gets shorter. Where a join is too short to
-lose `side`, that side loses less. A glyph without an advance does not change. The kerning does not change.
+stay on that edge, so the join gets shorter. Where a join or a sidebearing is
+too short to lose `side`, that side loses less. A glyph without an advance does not change. The kerning does not change.
 
 The drafts are written to output/optical-size/, which Git ignores. With
 --write, each glyph of a large master that is calculated, and not corrected
-by hand, is replaced and gets the purple mark, and the designspace of the
+by hand, is replaced and gets the purple mark and the digest of its outline, and the designspace of the
 project gets the map of the axis. Use Git to undo it. The report lists the
 glyphs that the rule does not fit.
 """
 from __future__ import annotations
 
 import argparse
-import io
+import hashlib
 import re
 import shutil
-import subprocess
 import sys
-import tarfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -59,6 +57,27 @@ def body(text):
     return re.sub(r'<lib>.*?</lib>', '', text, flags=re.S)
 
 
+CALCULATED = 'garden.font.calculated'
+
+
+def digest(text):
+    return hashlib.sha1(body(text).encode()).hexdigest()
+
+
+def stamp(text):
+    """A GLIF text with the digest of its outline in its lib. A glyph whose
+    outline still has that digest is calculated: nobody changed it by hand."""
+    text = re.sub(rf'\s*<key>{re.escape(CALCULATED)}</key>\s*<string>[^<]*</string>', '', text)
+    entry = f'\t\t\t<key>{CALCULATED}</key>\n\t\t\t<string>{digest(text)}</string>\n'
+    return re.sub(r'(<lib>\s*<dict>\n)', rf'\g<1>{entry}', text, count=1)
+
+
+def calculated(text):
+    """True when a glyph has the digest of a draft and its outline did not change since."""
+    found = re.search(rf'<key>{re.escape(CALCULATED)}</key>\s*<string>([^<]*)</string>', text)
+    return bool(found) and found.group(1) == digest(text)
+
+
 def joining_sides(name):
     """The sides on which an Arabic form joins the next letter, from its name."""
     if '-ar' not in name:
@@ -78,7 +97,8 @@ def points_of(text):
 def losses(name, glyphs, side, grid=8, seen=()):
     """(left, right, note): the units that each side of a glyph loses.
 
-    A free side loses `side`. A joining side loses `side` where each line or
+    A free side loses `side`, or less where the sidebearing is smaller than
+    `side` and one grid step. A joining side loses `side` where each line or
     handle that goes from the edge of the advance into the letter stays at
     least `grid` long, and less where one of them is shorter. A composite
     loses what its first part with an advance loses.
@@ -95,8 +115,12 @@ def losses(name, glyphs, side, grid=8, seen=()):
                 return losses(base, glyphs, side, grid, seen + (name,))
         return side, side, None
     found, note = {'left': side, 'right': side}, None
+    xs = [x for contour in contours for x, _, _ in contour]
+    bearings = {'left': min(xs), 'right': width - max(xs)}
     for which, on_edge in (('left', lambda x: x <= 0), ('right', lambda x: x >= width)):
         if which not in joins:
+            # A free side keeps a sidebearing of one grid step, so that the ink stays in its advance.
+            found[which] = max(0, min(side, (bearings[which] - grid) // grid * grid))
             continue
         if not any(on_edge(x) for contour in contours for x, _, _ in contour):
             note = 'the name is a joining form, but no point is on the edge of the advance'
@@ -129,8 +153,8 @@ def draft_glyph(name, glyphs, side, shared=None):
     if shared and name in shared:
         left, right = shared[name]
     joins = joining_sides(name) if points_of(text) else ()
-    if (left, right) != (side, side) and not note:
-        note = f'a join is short: the sides lose {number(left)} and {number(right)}'
+    if (left, right) != (side, side) and not note and joining_sides(name):
+        note = f'a join or a sidebearing is short: the sides lose {number(left)} and {number(right)}'
 
     def moved(x):
         if 'left' in joins and x <= 0:
@@ -183,17 +207,6 @@ def draft_master(small, large, side, output, shared=None):
     return target, report
 
 
-def committed(source, ufo):
-    """The GLIF texts of a master in the last commit, by file name."""
-    run = subprocess.run(['git', 'archive', 'HEAD', f'{ufo.relative_to(source.root).as_posix()}/glyphs'],
-                         cwd=source.root, capture_output=True)
-    if run.returncode:
-        return {}
-    with tarfile.open(fileobj=io.BytesIO(run.stdout)) as archive:
-        return {Path(member.name).name: archive.extractfile(member).read().decode()
-                for member in archive.getmembers() if member.name.endswith('.glif')}
-
-
 def set_map(root, design, name):
     """Give the opsz axis of a designspace the map of the rule."""
     axis = root.find('axes/axis[@tag="opsz"]')
@@ -221,33 +234,28 @@ def shared_losses(ufos, side):
     return found
 
 
-def write_sources(source, design, drafted):
+def write_sources(source, design, drafted, replace_all=False):
     """Put the drafts into the large masters of the project. Returns (written, kept).
 
-    A glyph of a large master is calculated when it is not in the last
-    commit, or when in that commit it is equal to the small master or to the
-    draft from the small master. Only a calculated glyph is replaced. Any
-    other glyph has a correction of its own, and it stays.
+    Each written glyph gets the digest of its outline. A glyph is replaced
+    when its outline still has that digest, or when it is still equal to the
+    small master. Any other glyph has a correction of its own, and it stays.
+    `replace_all` replaces every glyph.
     """
     rgba = source.design().get('colors', {}).get('purple', {}).get('rgba')
     purple = ','.join(number(value) for value in rgba[-1]) if rgba else PURPLE
     written, kept = 0, []
-    for small, large, draft, shared in drafted:
-        before_small, before_large = committed(source, small), committed(source, large)
-        names = glyph_names(before_small)
-        glyphs = {names[file]: text for file, text in before_small.items()}
+    for small, large, draft in drafted:
         for path in sorted((draft / 'glyphs').glob('*.glif')):
-            target, text = large / 'glyphs' / path.name, path.read_text()
-            old_small, old_large = before_small.get(path.name), before_large.get(path.name)
+            target, origin, text = large / 'glyphs' / path.name, small / 'glyphs' / path.name, path.read_text()
             if not target.is_file():
                 continue
-            if old_small is not None and old_large is not None:
-                old_draft = draft_glyph(names[path.name], glyphs, design['side'], shared)[0]
-                if body(old_large) not in (body(old_small), body(old_draft)):
-                    kept.append(f'{large.stem}: {path.stem}')
-                    continue
-            if body(target.read_text()) != body(text):
-                target.write_text(set_purple(text, purple))
+            present = target.read_text()
+            if not (replace_all or calculated(present) or body(present) == body(origin.read_text())):
+                kept.append(f'{large.stem}: {path.stem}')
+                continue
+            if body(present) != body(text) or not calculated(present):
+                target.write_text(stamp(set_purple(text, purple)))
                 written += 1
     tree = ET.parse(source.designspace)
     set_map(tree.getroot(), design, source.designspace.name)
@@ -261,6 +269,7 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('masters', nargs='*', help='the small masters to draft from (default: all)')
     parser.add_argument('--write', action='store_true', help='put the drafts into sources/')
+    parser.add_argument('--all', action='store_true', help='with --write: also replace the glyphs that were corrected by hand')
     parser.add_argument('--output', default=OUTPUT, help=f'output directory (default: {OUTPUT})')
     args = parser.parse_args()
     source = project.load()
@@ -287,9 +296,9 @@ def main():
         print(f'{pairs[name]}: {report["drafted"]} glyphs drafted, {report["unchanged"]} without change')
         for note in report['notes']:
             print(f'  {note}')
-        drafted.append((source.ufo(name), source.ufo(pairs[name]), ufo, shared))
+        drafted.append((source.ufo(name), source.ufo(pairs[name]), ufo))
     if args.write:
-        written, kept = write_sources(source, design, drafted)
+        written, kept = write_sources(source, design, drafted, args.all)
         print(f'{written} glyphs written to sources/')
         for line in kept:
             print(f'  kept, corrected by hand: {line}')

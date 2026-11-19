@@ -23,7 +23,7 @@ features and the font info are those of the weight master.
 The grade masters are written to sources/, beside the weight masters, and
 the designspace gets the grade axis and the masters. A glyph of a grade
 master that is calculated is replaced, and one that has a correction of its
-own stays, as in `fgtools draft-optical-size`. Every drafted glyph is purple.
+own stays: each written glyph has the digest of its outline in its lib. Every drafted glyph is purple.
 Use Git to undo a run. Then run `fgtools draft-optical-size --write` for the
 grade masters of the large optical size.
 """
@@ -36,8 +36,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 from fgtools import project
-from fgtools.draft_optical_size import (ADVANCE, ANCHOR, COMPONENT, POINT, advance_of, body, committed,
-                                        joining_sides)
+from fgtools.draft_optical_size import (ADVANCE, ANCHOR, COMPONENT, POINT, advance_of, body, calculated,
+                                        joining_sides, stamp)
 from fgtools.draft_weights import PURPLE, draft_glyph, number, set_purple
 
 AXIS = 'Grade'
@@ -132,28 +132,27 @@ def drafts_of(name, grade, texts, weights, grid):
             for file, text in texts[name].items()}
 
 
-def draft_master(source, name, grade, texts, old_texts, weights, grid, purple):
+def draft_master(source, name, grade, texts, weights, grid, purple, replace_all=False):
     """Write one grade master into sources/. Returns (path, counts).
 
-    A glyph of the grade master is calculated when it is not in the last
-    commit, or when in that commit it is equal to the draft from the weight
-    masters of that commit. Only a calculated glyph is replaced.
+    Each written glyph gets the digest of its outline. A glyph is replaced
+    when its outline still has that digest. Any other glyph of a grade master
+    that exists has a correction of its own, and it stays.
     """
     own = source.ufo(name)
     target = own.with_name(f'{own.stem}_GRAD{number(grade)}.ufo')
-    before = committed(source, target) if target.exists() else {}
-    if not target.exists():
+    new = not target.exists()
+    if new:
         shutil.copytree(own, target)
-    drafts = drafts_of(name, grade, texts, weights, grid)
-    old = drafts_of(name, grade, old_texts, weights, grid) if before and old_texts.get(name) else {}
     counts = {'drafted': 0, 'kept': 0}
-    for file, draft in drafts.items():
+    for file, draft in drafts_of(name, grade, texts, weights, grid).items():
         path = target / 'glyphs' / file
-        if file in before and (file not in old or body(before[file]) != body(old[file])):
+        present = path.read_text() if path.is_file() else ''
+        if not (new or replace_all or calculated(present)):
             counts['kept'] += 1
             continue
-        if not path.is_file() or body(path.read_text()) != body(draft):
-            path.write_text(set_purple(draft, purple))
+        if body(present) != body(draft) or not calculated(present):
+            path.write_text(stamp(set_purple(draft, purple)))
             counts['drafted'] += 1
     return target, counts
 
@@ -198,6 +197,7 @@ def main():
     parser = argparse.ArgumentParser(prog='fgtools draft-grade', description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('masters', nargs='*', help='the weight masters to draft from (default: all)')
+    parser.add_argument('--all', action='store_true', help='also replace the glyphs that were corrected by hand')
     args = parser.parse_args()
     source = project.load()
     design = source.design()
@@ -214,13 +214,12 @@ def main():
             raise project.ProjectError(f'no weight master named {name}')
     texts = {name: {path.name: path.read_text() for path in sorted((source.ufo(name) / 'glyphs').glob('*.glif'))}
              for name in weights}
-    old_texts = {name: committed(source, source.ufo(name)) for name in weights}
     optical = design.get('optical_size')
     sizes = [f' {optical["to"]}pt'] if optical else []
     low, high = min(weights.values()), max(weights.values())
     for name in args.masters or weights:
         for grade in grades:
-            ufo, counts = draft_master(source, name, grade, texts, old_texts, weights, grid, purple)
+            ufo, counts = draft_master(source, name, grade, texts, weights, grid, purple, args.all)
             print(f'{master_name(name, grade)}: outlines of weight '
                   f'{number(min(max(weights[name] + grade, low), high))}, '
                   f'{counts["drafted"]} glyphs drafted, {counts["kept"]} kept')

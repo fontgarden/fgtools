@@ -25,7 +25,7 @@ def draw(sheet, job):
         sheet.header(job.family, 'Character set', f'{len(texts)} characters', job.stamp)
         for index, text in enumerate(part):
             line, place = divmod(index, across)
-            advance = font.measure(text)[0] * SIZE
+            advance = font.measure(text, size=SIZE)[0] * SIZE
             # A character stands in the middle of its module: an optical position, not a lattice one.
             sheet.text(text, place + (module - advance) / 2 / module, 1 + line + 0.3, SIZE, free=True)
         for line in range(1, -(-len(part) // across) + 2):

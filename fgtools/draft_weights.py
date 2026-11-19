@@ -5,6 +5,7 @@ usage:
   fgtools draft-weights            draft every weight of CONTEXT.md
   fgtools draft-weights Thin       draft the named weights
   fgtools draft-weights --build    also compile a variable font of all masters
+  fgtools draft-weights --write    also update the calculated glyphs of these masters in sources/
 
 A weight is a table of CONTEXT.md:
 
@@ -24,7 +25,13 @@ copied from the nearer master, and the report lists it.
 
 The drafts are written to output/weights/, which Git ignores, with a
 designspace that has the masters of the project and the drafts. Every
-drafted glyph is purple. Nothing in sources/ is changed.
+drafted glyph is purple. Nothing in sources/ is changed without --write.
+
+With --write, a glyph of the master in sources/ is replaced when it is
+calculated: it is equal to the draft within one step of the grid, or it has the digest of an earlier
+draft and its outline did not change since. A glyph that was corrected by
+hand stays. So a change of the two masters reaches the weight, and the
+corrections of the weight are kept. Use Git to undo it.
 """
 from __future__ import annotations
 
@@ -126,6 +133,38 @@ def collapsed(source, draft):
     """True when a contour of the draft has turned inside out or has no area."""
     return any(before * after <= 0 for before, after
                in zip(signed_areas(source), signed_areas(draft)) if before)
+
+
+def near(first, second, tolerance):
+    """True when two GLIF texts have the same structure and no coordinate differs by more
+    than `tolerance`: the difference of two roundings, not a correction."""
+    (slots_a, structure_a), (slots_b, structure_b) = slots(first), slots(second)
+    return structure_a == structure_b and all(
+        abs(a[3] - b[3]) <= tolerance for a, b in zip(slots_a, slots_b))
+
+
+def write_master(source, name, draft):
+    """Update the calculated glyphs of a master in sources/ from its draft. Returns (written, kept)."""
+    from fgtools.draft_optical_size import body, calculated, stamp
+    if name not in source.ufos:
+        raise project.ProjectError(f'sources/ has no master named {name}')
+    written = kept = 0
+    for path in sorted((draft / 'glyphs').glob('*.glif')):
+        target, text = source.ufo(name) / 'glyphs' / path.name, path.read_text()
+        if not target.is_file():
+            continue
+        present = target.read_text()
+        same = body(present) == body(text)
+        grid = source.design().get('grid', {}).get('source', 1)
+        if not (same or calculated(present) or near(present, text, grid)):
+            kept += 1
+        elif not same:
+            target.write_text(stamp(text))
+            written += 1
+        elif not calculated(present):
+            # The glyph is equal to the draft: record that it is calculated, and keep its mark.
+            target.write_text(stamp(present))
+    return written, kept
 
 
 def factor(setting, between, name):
@@ -258,6 +297,8 @@ def main():
     parser.add_argument('weights', nargs='*', help='the weights to draft (default: all)')
     parser.add_argument('--build', action='store_true',
                         help='compile a variable font of the masters and the drafts')
+    parser.add_argument('--write', action='store_true',
+                        help='update the calculated glyphs of these masters in sources/')
     parser.add_argument('--output', default=OUTPUT, help=f'output directory (default: {OUTPUT})')
     args = parser.parse_args()
     source = project.load()
@@ -288,6 +329,9 @@ def main():
             if report[key]:
                 print(f'  {label}: {" ".join(report[key])}')
         print(f'  {ufo.relative_to(source.root)}')
+        if args.write:
+            written, kept = write_master(source, name, ufo)
+            print(f'  sources/: {written} glyphs updated, {kept} kept with their corrections')
     designspace = write_designspace(source, drafted, output)
     print(designspace.relative_to(source.root))
     if args.build:

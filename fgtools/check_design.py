@@ -10,7 +10,7 @@ policy. It reads the sources and never writes them.
     fgtools check-design --not-green  report on every glyph that is not green
     fgtools check-design --green      run the checks on green glyphs (measures
                                          how often the checks flag approved work)
-    fgtools check-design --observe    print stroke ranges of the green glyphs
+    fgtools check-design --observe    print stroke ranges of the green and yellow glyphs
     fgtools check-design --ready      list composites that pass and are not green
     fgtools check-design --queue      rank the glyphs that most composites wait on
 
@@ -208,6 +208,10 @@ def queue(data):
             print(f"  {part} ({glyphs[part]['color']['name']}) {len(waiting)}")
 
 
+# Yellow is close to green, so both are evidence for the stroke ranges.
+REFERENCE_COLORS = ('green', 'yellow')
+
+
 def observe(data, limit):
     """Stroke ranges of the green glyphs: the evidence for the targets."""
     for master in limit:
@@ -216,7 +220,7 @@ def observe(data, limit):
             count = 0
             for name, record in data[master].items():
                 if (script_of(name, record) == script and record['contours']
-                        and record['color']['name'] == 'green'):
+                        and record['color']['name'] in REFERENCE_COLORS):
                     count += 1
                     for key, lengths in strokes(analyze(master, record), limit[master]).items():
                         pool[key] += lengths

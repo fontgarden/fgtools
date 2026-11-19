@@ -27,7 +27,7 @@ def draw(sheet, job):
                 row = 1 + line * CELL
                 if index % across == 0:
                     sheet.rule(row)
-                advance = font.measure(character)[0] * SIZE
+                advance = font.measure(character, size=SIZE)[0] * SIZE
                 # A character stands in the middle of its cell: an optical position, not a lattice one.
                 sheet.text(character, place * CELL + (CELL * module - advance) / 2 / module, row + 0.5, SIZE, free=True)
             sheet.rule(1 + (-(-len(part) // across)) * CELL)

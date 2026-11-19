@@ -75,6 +75,7 @@ class Type:
     """The font of the project, measured with HarfBuzz."""
 
     def __init__(self, path, family, low, high, upm, cap, x_height, descender):
+        self.scale = 1  # a sheet sets it: the size as written for one pixel of the layout
         import uharfbuzz as hb
         self.hb = hb
         self.path, self.family, self.low, self.high = Path(path), family, low, high
@@ -98,15 +99,27 @@ class Type:
                 return direction != 'L'
         return False
 
-    def measure(self, text, weight=None, features=()):
+    def axes(self, weight, size=None, grade=None):
+        """The axis values of a setting. The optical size is the size as it is written: a font
+        with an optical size axis gets the design of each size, as in a browser. A font without
+        the axis ignores the value."""
+        values = {'wght': weight} if self.high > self.low else {}
+        if size is not None:
+            values['opsz'] = size * self.scale
+        if grade is not None:
+            values['GRAD'] = grade
+        return values
+
+    def measure(self, text, weight=None, features=(), size=None, grade=None):
         """(advance, ink left, ink right) of a line of text, in parts of the em. The ink values are
-        the distances from the origin to the first and the last ink."""
+        the distances from the origin to the first and the last ink. `size` is the size of the
+        setting in pixels, for the optical size."""
         weight = self.low if weight is None else weight
-        key = (text, round(weight, 3), tuple(features))
+        axes = self.axes(weight, size, grade)
+        key = (text, tuple(features), tuple(sorted((tag, round(value, 3)) for tag, value in axes.items())))
         if key not in self.cache:
             hb = self.hb
-            if self.high > self.low:
-                self.font.set_variations({'wght': weight})
+            self.font.set_variations(axes)
             buffer = hb.Buffer()
             buffer.add_str(text)
             buffer.guess_segment_properties()
@@ -129,13 +142,13 @@ class Type:
         target = measure / size
 
         def ink(text):
-            _, left, right = self.measure(text, weight)
+            _, left, right = self.measure(text, weight, size=size)
             return right - left
 
         words = [word for word in words if self.covers(word) and word not in used and not self.avoid & set(word)]
         best = max(((ink(word), word) for word in words if ink(word) <= target), default=(0, None))
         if best[0] < target * 0.97:
-            space = self.measure(' ', weight)[0] if self.covers(' ') else 0
+            space = self.measure(' ', weight, size=size)[0] if self.covers(' ') else 0
             if space:
                 short = sorted(words, key=ink)
                 for first in short:
@@ -157,7 +170,7 @@ class Type:
             found, line = [], ''
             for word in text.split():
                 trial = f'{line} {word}'.strip()
-                if line and self.measure(trial, weight)[0] * size > limit:
+                if line and self.measure(trial, weight, size=size)[0] * size > limit:
                     found.append(line)
                     line = word
                 else:
@@ -166,7 +179,7 @@ class Type:
 
         result = broken(measure)
         for step in range(1, 13):
-            if len(result) < 2 or self.measure(result[-1], weight)[0] * size >= measure / 2:
+            if len(result) < 2 or self.measure(result[-1], weight, size=size)[0] * size >= measure / 2:
                 break
             trial = broken(measure - 16 * step)
             if len(trial) == len(result):
@@ -179,6 +192,7 @@ class Sheet:
     corner of the text area."""
 
     def __init__(self, grid, type_, colors=None, name=''):
+        type_.scale = grid['scale']
         self.grid, self.type, self.name = grid, type_, name
         self.colors = dict(LIGHT) if grid.get('light') else {**PALETTE, **(colors or {})}
         self.cols, self.rows = grid['text'][2], grid['text'][3]
@@ -226,16 +240,17 @@ class Sheet:
         self.pages[-1]['items'].append(item)
 
     def text(self, text, col, row, size, weight=None, color='ink', optical=False, flush='left', drop=0,
-             features=(), free=False):
+             features=(), free=False, grade=None):
         """Set a line with its cap top on the row line (plus `drop` pixels) and its start on the
         column line. `optical` puts the ink, not the origin, on the column line. `flush='right'`
-        ends the line at the column line. Returns the advance in pixels, or 0 when the font cannot
-        set the text."""
+        ends the line at the column line. `grade` is a value of the grade axis. The optical size
+        is the size of the text. Returns the advance in pixels, or 0 when the font cannot set
+        the text."""
         type_ = self.type
         weight = type_.low if weight is None else weight
         if not type_.covers(text):
             return 0
-        advance, left, right = (value * size for value in type_.measure(text, weight, features))
+        advance, left, right = (value * size for value in type_.measure(text, weight, features, size, grade))
         if flush == 'right':
             origin = self.x(col) - (right if optical else advance)
         else:
@@ -252,7 +267,8 @@ class Sheet:
         if not free and (origin + left < self.x(0) - 1 or origin + right > self.x(self.cols) + 1
                          or top < self.y(0) - 1 or baseline > self.y(self.rows) + 1):
             self.fault(f'"{text[:20]}" at size {size:g} is outside the text area')
-        self.add('text', origin, baseline, size, weight, self.colors[color], ','.join(features), text)
+        others = ''.join(f',{tag}={value:g}' for tag, value in type_.axes(weight, size, grade).items() if tag != 'wght')
+        self.add('text', origin, baseline, size, f'{weight:g}{others}', self.colors[color], ','.join(features), text)
         return advance
 
     def label(self, text, col, row, color='secondary', flush='left', drop=LABEL_DROP, free=False):
@@ -351,7 +367,7 @@ def plot(sheets, output, path):
                 kind = item[0]
                 if kind == 'text':
                     _, x, baseline, size, weight, color, features, text = item
-                    lines.append(f'text\t{s(x)}\t{up(baseline)}\t{s(size)}\t{weight:g}\t{rgba(color)}\t{features}\t{text}')
+                    lines.append(f'text\t{s(x)}\t{up(baseline)}\t{s(size)}\t{weight}\t{rgba(color)}\t{features}\t{text}')
                 elif kind == 'line':
                     _, x0, y0, x1, y1, weight, color = item
                     lines.append(f'line\t{s(x0)}\t{up(y0)}\t{s(x1)}\t{up(y1)}\t{s(weight)}\t{rgba(color)}')
