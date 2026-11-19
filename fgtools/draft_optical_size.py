@@ -234,7 +234,7 @@ def shared_losses(ufos, side):
     return found
 
 
-def write_sources(source, design, drafted, replace_all=False):
+def write_sources(source, design, drafted, replace_all=False, grade_bases=None):
     """Put the drafts into the large masters of the project. Returns (written, kept).
 
     Each written glyph gets the digest of its outline. A glyph is replaced
@@ -245,17 +245,32 @@ def write_sources(source, design, drafted, replace_all=False):
     rgba = source.design().get('colors', {}).get('purple', {}).get('rgba')
     purple = ','.join(number(value) for value in rgba[-1]) if rgba else PURPLE
     written, kept = 0, []
-    for small, large, draft in drafted:
+    grade_bases = grade_bases or {}
+    # Resolve neutral display advances after writing any neutral drafts.
+    for small, large, draft in sorted(drafted, key=lambda item: item[1] in grade_bases):
         for path in sorted((draft / 'glyphs').glob('*.glif')):
             target, origin, text = large / 'glyphs' / path.name, small / 'glyphs' / path.name, path.read_text()
             if not target.is_file():
                 continue
             present = target.read_text()
-            if not (replace_all or calculated(present) or body(present) == body(origin.read_text())):
+            replace = replace_all or calculated(present) or body(present) == body(origin.read_text())
+            if not replace:
                 kept.append(f'{large.stem}: {path.stem}')
-                continue
-            if body(present) != body(text) or not calculated(present):
+                text = present
+            if large in grade_bases:
+                base = grade_bases[large] / 'glyphs' / path.name
+                if base.is_file():
+                    width = advance_of(base.read_text())
+                    if advance_of(text) != width:
+                        if ADVANCE.search(text):
+                            text = ADVANCE.sub(lambda m: f'{m[1]}{number(width)}{m[3]}', text, count=1)
+                        else:
+                            text = text.replace('</glyph>', f'\t<advance width="{number(width)}"/>\n</glyph>', 1)
+            if replace and (body(present) != body(text) or not calculated(present)):
                 target.write_text(stamp(set_purple(text, purple)))
+                written += 1
+            elif not replace and text != present:
+                target.write_text(text)
                 written += 1
     tree = ET.parse(source.designspace)
     set_map(tree.getroot(), design, source.designspace.name)
@@ -298,7 +313,12 @@ def main():
             print(f'  {note}')
         drafted.append((source.ufo(name), source.ufo(pairs[name]), ufo))
     if args.write:
-        written, kept = write_sources(source, design, drafted, args.all)
+        grade_bases = {
+            source.ufo(large): source.ufo(pairs[weight_of(name)])
+            for name, large in pairs.items()
+            if weight_of(name) != name and weight_of(name) in pairs
+        }
+        written, kept = write_sources(source, design, drafted, args.all, grade_bases)
         print(f'{written} glyphs written to sources/')
         for line in kept:
             print(f'  kept, corrected by hand: {line}')
