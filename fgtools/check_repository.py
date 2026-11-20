@@ -40,6 +40,8 @@ LAYOUT = [
 
 # Allowed paths that a project does not need.
 OPTIONAL = [
+    # Designer-maintained reference UFOs outside the production designspace.
+    'sources/drawing-references/*.ufo/**',
     # On-demand glyph grading report.
     'STATUS.md',
     # Cases for projects that use the drafting benchmark.
