@@ -260,7 +260,25 @@ def main():
     parser.add_argument('--beside', default='', help='other glyphs of the project to draw in each row')
     parser.add_argument('--base', default='main', help='the revision to compare with (default main)')
     parser.add_argument('--out', type=Path, help='the PNG file (default output/render/<glyphs>.png)')
+    parser.add_argument('--word', help='compare this shaped word in the supplied static font files')
+    parser.add_argument('--thickness-reference', type=float, help='fixed center of the heatmap, in the first font’s units')
+    parser.add_argument('--reference-picture', type=Path, help='optional screenshot of the word starting with a flat capital')
+    parser.add_argument('--edge-track', nargs=5, action='append', default=[],
+                        metavar=('GLYPH', 'X1', 'Y1', 'X2', 'Y2'),
+                        help='follow opposing straight edges from inside a stroke toward a join; write contacts to JSON beside the word proof')
     args = parser.parse_args()
+    if args.word:
+        from fgtools.word_thickness import word_proof
+        if not args.thickness_reference or args.thickness_reference <= 0:
+            parser.error('--word requires a positive --thickness-reference')
+        try:
+            word_proof(list(map(Path, args.glyphs)), args.word, args.thickness_reference,
+                       args.reference_picture, args.out or Path('output/render/word-thickness.png'), args.edge_track)
+        except (OSError, ValueError) as error:
+            parser.exit(1, f'{error}\n')
+        return
+    if args.thickness_reference is not None or args.reference_picture or args.edge_track:
+        parser.error('word comparison options require --word')
     names = [name for group in args.glyphs for name in group.split()]
     render(names, args.master, args.beside.split(), args.base, args.out)
 
